@@ -1,0 +1,229 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>AggieFind — Admin Dashboard</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0; background:#f7fafc; color:#111827; }
+      .wrap { max-width:1000px; margin:32px auto; padding:20px; background:#fff; border-radius:10px; box-shadow:0 6px 20px rgba(16,24,40,0.06); }
+      header { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+      header h1 { margin:0; font-size:20px; color:#650015; }
+      .row { display:flex; gap:12px; align-items:center; }
+      input, button, textarea, select { font-size:14px; padding:8px 10px; border-radius:8px; border:1px solid #e5e7eb; }
+      button { cursor:pointer; background:#650015; color:#fff; border:0; }
+      button.ghost { background:transparent; color:#111827; border:1px solid #e5e7eb; }
+      table { width:100%; border-collapse:collapse; margin-top:16px; }
+      th, td { padding:8px 10px; border-bottom:1px solid #f3f4f6; text-align:left; vertical-align:middle; }
+      .tag { padding:4px 8px; border-radius:999px; font-weight:700; font-size:12px; display:inline-block; }
+      .verified { background:#ecfdf5; color:#065f46; }
+      .notverified { background:#fff7ed; color:#92400e; }
+      .small { font-size:12px; color:#6b7280; }
+      .actions button { margin-right:8px; }
+      .login { max-width:420px; margin:0 auto; padding:16px; border-radius:8px; background:#fff; box-shadow:0 4px 12px rgba(16,24,40,0.04); }
+      .center { text-align:center; }
+    </style>
+    <!-- React + Babel from CDN (simple single-file app) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      function api(path, opts = {}) {
+        const base = '';
+        return fetch(base + path, opts).then(async r => {
+          const t = await r.text();
+          try { const json = JSON.parse(t || '{}'); if (!r.ok) throw json; return json; } catch (e) {
+            // not json or error
+            if (!r.ok) throw { error: t || 'Request failed' };
+            return t;
+          }
+        });
+      }
+
+      function Login({ onLogin }) {
+        const [user, setUser] = useState(localStorage.getItem('agg_admin_user') || '');
+        const [pass, setPass] = useState('');
+        const [loading, setLoading] = useState(false);
+        async function submit(e) {
+          e && e.preventDefault();
+          setLoading(true);
+          try {
+            const res = await api('/api/admin/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username: user, password: pass })
+            });
+            localStorage.setItem('agg_token', res.token);
+            localStorage.setItem('agg_admin_user', res.username);
+            onLogin(res.token, res.username);
+          } catch (err) {
+            alert(err.error || 'Login failed');
+          } finally { setLoading(false); }
+        }
+        return (
+          <div className="wrap login">
+            <h2 className="center">AggieFind — Admin Login</h2>
+            <form onSubmit={submit}>
+              <div style={{ marginBottom:8 }}>
+                <label className="small">Username</label><br />
+                <input value={user} onChange={e=>setUser(e.target.value)} />
+              </div>
+              <div style={{ marginBottom:8 }}>
+                <label className="small">Password</label><br />
+                <input type="password" value={pass} onChange={e=>setPass(e.target.value)} />
+              </div>
+              <div style={{ display:'flex', justifyContent:'center', gap:8 }}>
+                <button disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
+                <button type="button" className="ghost" onClick={() => { setUser('admin'); setPass('password123'); }}>Use defaults</button>
+              </div>
+            </form>
+            <p className="small center" style={{ marginTop:12 }}>Default admin: <strong>admin / password123</strong> (run init-admin script to create)</p>
+          </div>
+        );
+      }
+
+      function AdminApp({ token, username, onLogout }) {
+        const [items, setItems] = useState([]);
+        const [loading, setLoading] = useState(false);
+        const [q, setQ] = useState('');
+        const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token };
+
+        async function load() {
+          setLoading(true);
+          try {
+            const res = await api('/api/admin/items', { headers });
+            setItems(res);
+          } catch (err) {
+            alert(err.error || 'Failed to load items');
+          } finally { setLoading(false); }
+        }
+
+        useEffect(() => { load(); }, []);
+
+        async function updateItem(id, patch) {
+          try {
+            const updated = await api('/api/admin/items/' + id, {
+              method: 'PUT',
+              headers,
+              body: JSON.stringify(patch)
+            });
+            setItems(prev => prev.map(it => it.id === id ? updated : it));
+          } catch (err) {
+            alert(err.error || 'Update failed');
+          }
+        }
+
+        async function deleteItem(id) {
+          if (!confirm('Delete this item?')) return;
+          try {
+            await api('/api/admin/items/' + id, { method: 'DELETE', headers });
+            setItems(prev => prev.filter(i => i.id !== id));
+          } catch (err) {
+            alert(err.error || 'Delete failed');
+          }
+        }
+
+        function Row({ it }) {
+          return (
+            <tr>
+              <td style={{ width:260 }}>
+                <div style={{ fontWeight:700 }}>{it.name}</div>
+                <div className="small">{it.description}</div>
+              </td>
+              <td>
+                <div>{it.location || '—'}</div>
+                <div className="small">Found by: {it.foundBy || '—'}</div>
+                <div className="small">On: {it.dateFound || '—'}</div>
+              </td>
+              <td>
+                <div className={`tag ${it.verified ? 'verified' : 'notverified'}`}>{it.verified ? 'Verified' : 'Unverified'}</div>
+                <div className="small">{it.verifiedBy ? `by ${it.verifiedBy}` : ''}</div>
+              </td>
+              <td style={{ width:240 }}>
+                <div className="actions">
+                  <button onClick={() => updateItem(it.id, { verified: !it.verified })}>{it.verified ? 'Unverify' : 'Verify'}</button>
+                  <button onClick={() => updateItem(it.id, { found: !it.found })} className="ghost">{it.found ? 'Mark Unfound' : 'Mark Found'}</button>
+                  <button onClick={() => deleteItem(it.id)} className="ghost">Delete</button>
+                </div>
+              </td>
+            </tr>
+          );
+        }
+
+        return (
+          <div className="wrap">
+            <header>
+              <div style={{ width:48, height:48, borderRadius:24, background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', border:'2px solid #650015' }}>
+                <strong style={{ color:'#650015' }}>NMSU</strong>
+              </div>
+              <div style={{ flex:1 }}>
+                <h1>AggieFind — Admin</h1>
+                <div className="small">Signed in as <strong>{username}</strong></div>
+              </div>
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                <button onClick={load}>Refresh</button>
+                <button onClick={() => { localStorage.removeItem('agg_token'); onLogout(); }} className="ghost">Sign out</button>
+              </div>
+            </header>
+
+            <section style={{ marginTop:8 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <div style={{ display:'flex', gap:8 }}>
+                  <input placeholder="Search (client side)" value={q} onChange={e=>setQ(e.target.value)} />
+                  <button onClick={() => setQ('')} className="ghost">Clear</button>
+                </div>
+                <div className="small">Total items: <strong>{items.length}</strong></div>
+              </div>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Location / Details</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.filter(it => {
+                    if (!q) return true;
+                    const qq = q.toLowerCase();
+                    return (it.name || '').toLowerCase().includes(qq) ||
+                      (it.description || '').toLowerCase().includes(qq) ||
+                      (it.location || '').toLowerCase().includes(qq) ||
+                      (it.foundBy || '').toLowerCase().includes(qq);
+                  }).map(it => <Row key={it.id} it={it} />)}
+                </tbody>
+              </table>
+            </section>
+          </div>
+        );
+      }
+
+      function Root() {
+        const [token, setToken] = useState(localStorage.getItem('agg_token') || null);
+        const [username, setUsername] = useState(localStorage.getItem('agg_admin_user') || 'admin');
+
+        function handleLogin(t, user) {
+          setToken(t);
+          setUsername(user);
+        }
+        function handleLogout() {
+          setToken(null);
+          setUsername(null);
+        }
+
+        if (!token) return <Login onLogin={handleLogin} />;
+        return <AdminApp token={token} username={username} onLogout={handleLogout} />;
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,48 @@
+{
+  "admins": [
+    {
+      "id": "4dac7e73-e5fe-4987-b0f8-5a3aa6564331",
+      "username": "admin",
+      "passwordHash": "$2b$10$nNXDGwvpFoomr/tiI5l4iOuoTpeadglucq79y7PhVQtffJHoXbSPe",
+      "createdAt": 1763093479934
+    }
+  ],
+  "items": [
+    {
+      "id": "874a5787-ddfa-4c3f-898f-34fc02e278e2",
+      "name": "Phone",
+      "description": "Iphone 17",
+      "location": "zuhl library",
+      "dateFound": "2025-11-14",
+      "foundBy": "zarin",
+      "found": false,
+      "verified": true,
+      "verifiedBy": "admin",
+      "createdAt": 1763094609045
+    },
+    {
+      "id": "0e61e877-8b3c-474c-b997-da0da74cb017",
+      "name": "Laptop",
+      "description": "Laptop Macbook Air",
+      "location": "CCSU",
+      "dateFound": "2025-11-14",
+      "foundBy": "Popaye",
+      "found": true,
+      "verified": true,
+      "verifiedBy": "admin",
+      "createdAt": 1763094473445
+    },
+    {
+      "id": "7bfac25f-ae7e-487e-8867-a63b3123b4cb",
+      "name": "water bottle",
+      "description": "Pink",
+      "location": "Zuhl library",
+      "dateFound": "2025-11-14",
+      "foundBy": "Mike",
+      "found": false,
+      "verified": true,
+      "verifiedBy": "admin",
+      "createdAt": 1763094374003
+    }
+  ]
+}
