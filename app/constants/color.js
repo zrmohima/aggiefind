@@ -1,0 +1,10 @@
+export const BG = '#FFFFFF';           // app background -> white
+export const TEXT = '#0B0B0B';         // primary text on white background
+export const INV_TEXT = '#FFFFFF';     // text used on dark surfaces (cards/header)
+export const SUB = '#6B7280';          // secondary text
+export const BORDER = '#E5E7EB';
+export const CARD = '#111827';
+export const ACCENT_ADD = '#650015';    // crimson for header / add
+export const ACCENT_LIST = '#1D4ED8';
+export const ACCENT_ADD_P = '#aa1526';
+export const ACCENT_LIST_P = '#2563EB';

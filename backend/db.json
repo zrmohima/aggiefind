@@ -1,13 +1,43 @@
 {
-  "admins": [
+  "users": [
     {
       "id": "4dac7e73-e5fe-4987-b0f8-5a3aa6564331",
-      "username": "admin",
+      "username": "john_doe",
       "passwordHash": "$2b$10$nNXDGwvpFoomr/tiI5l4iOuoTpeadglucq79y7PhVQtffJHoXbSPe",
       "createdAt": 1763093479934
     }
   ],
   "items": [
+    {
+      "id": "3664669f-8a0b-4451-9ffb-971fee27b642",
+      "name": "bandage",
+      "description": "kjjh",
+      "location": "grad school",
+      "dateFound": "2025-11-17",
+      "foundBy": "Emma",
+      "status": "lost",
+      "createdAt": 1763422970861
+    },
+    {
+      "id": "3cf232b6-bc2a-464a-8dcf-0fe4b6d6c323",
+      "name": "gegrg",
+      "description": "rgrg",
+      "location": "rgtghh",
+      "dateFound": "2025-11-17",
+      "foundBy": "rhrh",
+      "status": "lost",
+      "createdAt": 1763411269807
+    },
+    {
+      "id": "ac72dec0-10d7-412f-9916-26898d7c89f8",
+      "name": "black bottle",
+      "description": "3 stickers",
+      "location": "Corbett center",
+      "dateFound": "2025-11-17",
+      "foundBy": "john doe",
+      "status": "lost",
+      "createdAt": 1763403558400
+    },
     {
       "id": "874a5787-ddfa-4c3f-898f-34fc02e278e2",
       "name": "Phone",
@@ -15,9 +45,7 @@
       "location": "zuhl library",
       "dateFound": "2025-11-14",
       "foundBy": "zarin",
-      "found": false,
-      "verified": true,
-      "verifiedBy": "admin",
+      "status": "lost",
       "createdAt": 1763094609045
     },
     {
@@ -27,9 +55,7 @@
       "location": "CCSU",
       "dateFound": "2025-11-14",
       "foundBy": "Popaye",
-      "found": true,
-      "verified": true,
-      "verifiedBy": "admin",
+      "status": "found",
       "createdAt": 1763094473445
     },
     {
@@ -39,9 +65,7 @@
       "location": "Zuhl library",
       "dateFound": "2025-11-14",
       "foundBy": "Mike",
-      "found": false,
-      "verified": true,
-      "verifiedBy": "admin",
+      "status": "lost",
       "createdAt": 1763094374003
     }
   ]
