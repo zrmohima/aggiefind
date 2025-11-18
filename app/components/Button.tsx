@@ -23,7 +23,7 @@ export default function Button({
                 alignItems: 'center',
                 borderWidth: kind === 'ghost' ? 1 : 0,
                 borderColor: kind === 'ghost' ? BORDER : 'transparent',
-                minWidth: 180
+                width: '100%'
             })}
         >
             <Text style={{ color: kind === 'ghost' ? TEXT : INV_TEXT, fontSize: 16, fontWeight: '700' }}>{title}</Text>

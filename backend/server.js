@@ -102,19 +102,17 @@ app.get('/api/user/items', userAuth, (req, res) => {
 });
 
 // user: update item
-app.put('/api/user/items/:id', userAuth, (req, res) => {
+app.put('/api/user/items/:id', (req, res) => {
   const id = req.params.id;
   const db = readDB();
   const item = db.items.find(i => i.id === id);
   if (!item) return res.status(404).json({ error: 'Item not found' });
-
-  // allow partial updates: name, description, location, dateFound, found (bool), verified (bool)
   const body = req.body || {};
   if (body.name !== undefined) item.name = String(body.name);
   if (body.description !== undefined) item.description = String(body.description);
   if (body.location !== undefined) item.location = String(body.location);
   if (body.dateFound !== undefined) item.dateFound = String(body.dateFound);
-  if (body.found !== undefined) item.found = !!body.found;
+  if (body.status !== undefined) item.status = body.status;
   // save
   writeDB(db);
   res.json(item);

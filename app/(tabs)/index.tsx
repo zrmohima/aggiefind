@@ -13,7 +13,8 @@ import Input from "../components/Input";
 import Field from "../components/Field";
 import { LostItem } from "../types/type";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BG, BORDER, CARD, INV_TEXT, SUB } from "../constants/color";
+import { ACCENT_ADD, ACCENT_ADD_P, BG, BORDER, CARD, INV_TEXT, SUB } from "../constants/color";
+import Button from "../components/Button";
 
 export default function HomeScreen() {
     const [items, setItems] = useState<LostItem[]>([]);
@@ -43,6 +44,21 @@ export default function HomeScreen() {
             });
     };
 
+    const markFound = (item: LostItem) => {
+        fetch(`http://localhost:4000/api/user/items/${item.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...item, status: 'found' })
+        })
+            .then(r => r.json())
+            .then(data => {
+                loadItemsFromBackend();
+            })
+            .catch(err => {
+                console.log('Error marking item as found:', err);
+            });
+    };
+
     useEffect(() => {
         loadItemsFromBackend();
     }, []);
@@ -66,7 +82,7 @@ export default function HomeScreen() {
                     ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
                     ListEmptyComponent={
                         <Text style={{ color: SUB, textAlign: 'center', marginTop: 24 }}>
-                            {query.trim().length === 0 ? 'Type to search lost items.' : 'No approved items match your search.'}
+                            {query.trim().length === 0 ? 'Type to search lost items.' : 'No items match your search.'}
                         </Text>
                     }
                     renderItem={({ item }: { item: LostItem }) => (
@@ -86,11 +102,13 @@ export default function HomeScreen() {
                                     </Text>
                                 </View>
                             </View>
-
                             {item.description ? <Text style={{ color: INV_TEXT }}>{item.description}</Text> : null}
                             {item.location ? <Text style={{ color: SUB }}>Found at: {item.location}</Text> : null}
                             {item.dateFound ? <Text style={{ color: SUB }}>Found on: {item.dateFound}</Text> : null}
                             {item.foundBy ? <Text style={{ color: SUB }}>Found by: {item.foundBy}</Text> : null}
+                            {item.status === 'lost' && <View style={{ flexDirection: 'row', gap: 10, marginTop: 8, marginBottom: 8 }}>
+                                <Button title="Mark Found" bg={ACCENT_ADD} bgPressed={ACCENT_ADD_P} onPress={() => markFound(item)} />
+                            </View>}
                         </View>
                     )}
                 />
