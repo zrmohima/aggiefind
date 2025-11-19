@@ -18,6 +18,7 @@ import { LostItem } from "../types/type";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ACCENT_ADD, ACCENT_ADD_P, BG, BORDER, CARD, INV_TEXT, SUB, TEXT } from "../constants/color";
 import Button from "../components/Button";
+import { useRouter } from "expo-router";
 
 export default function HomeScreen() {
     const [name, setName] = useState('');
@@ -26,6 +27,7 @@ export default function HomeScreen() {
     const [dateFound, setDateFound] = useState(new Date().toISOString().slice(0, 10));
     const [foundBy, setFoundBy] = useState('');
     const valid = name.trim().length > 0;
+    const router = useRouter();
 
     const addItem = () => {
         if (!valid) {
@@ -52,6 +54,7 @@ export default function HomeScreen() {
             .then(r => r.json())
             .then(data => {
                 Alert.alert('Success', 'Item submitted!');
+                router.navigate('/');
             })
             .catch(err => {
                 Alert.alert('Error', 'Could not submit item: ' + String(err).slice(0, 50));

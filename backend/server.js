@@ -33,7 +33,7 @@ app.get('/', (req, res) => {
 
 // Public API: add item
 app.post('/api/items', (req, res) => {
-  const { name, description = '', location = '', dateFound = '', foundBy = '' } = req.body;
+  const { name, description = '', location = '', dateFound = '', foundBy = '', status, createdAt } = req.body;
   if (!name || name.trim().length === 0) return res.status(400).json({ error: 'Missing name' });
   const id = uuidv4();
   const item = {
@@ -43,7 +43,7 @@ app.post('/api/items', (req, res) => {
     location: (location || '').trim(),
     dateFound: (dateFound || '').trim(),
     foundBy: (foundBy || '').trim(),
-    found: false,
+    status: 'lost',
     createdAt: Date.now()
   };
   const db = readDB();

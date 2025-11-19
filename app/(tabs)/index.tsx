@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
     View,
     Text,
@@ -12,6 +12,7 @@ import { LostItem } from "../types/type";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ACCENT_ADD, ACCENT_ADD_P, BG, BORDER, CARD, INV_TEXT, SUB } from "../constants/color";
 import Button from "../components/Button";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function HomeScreen() {
     const [items, setItems] = useState<LostItem[]>([]);
@@ -56,9 +57,11 @@ export default function HomeScreen() {
             });
     };
 
-    useEffect(() => {
-        loadItemsFromBackend();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            loadItemsFromBackend();
+        }, [])
+    );
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: BG }}>
