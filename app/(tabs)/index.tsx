@@ -1,12 +1,9 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
     FlatList,
-    Image,
-    TouchableOpacity,
-    Modal,
-    StyleSheet,
+    Image
 } from "react-native";
 import Header from "../components/Header";
 import Input from "../components/Input";
@@ -87,28 +84,33 @@ export default function HomeScreen() {
                     }
                     renderItem={({ item }: { item: LostItem }) => (
                         <View style={{
-                            backgroundColor: CARD, borderColor: BORDER, borderWidth: 1, borderRadius: 14,
-                            padding: 12, gap: 6
+                            backgroundColor: CARD, borderColor: BORDER, borderRadius: 8, overflow: 'hidden'
                         }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <Text style={{ color: INV_TEXT, fontSize: 16, fontWeight: '700' }}>
-                                    {item.name}
-                                </Text>
 
-                                {/* Status badge */}
-                                <View style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, backgroundColor: item.status === 'found' ? '#22c55e' : '#fbbf24' }}>
-                                    <Text style={{ color: '#000', fontSize: 12, fontWeight: '700' }}>
-                                        {item.status == 'found' ? 'FOUND' : 'MISSING'}
+                            <Image source={{ uri: 'https://mint.fiu.edu/wp-content/uploads/2021/10/image-not-available.jpg' }} style={{ width: '100%', height: 180 }} />
+                            <View style={{
+                                padding: 12, gap: 6
+                            }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <Text style={{ color: INV_TEXT, fontSize: 16, fontWeight: '700' }}>
+                                        {item.name}
                                     </Text>
+
+                                    {/* Status badge */}
+                                    <View style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, backgroundColor: item.status === 'found' ? '#22c55e' : '#fbbf24' }}>
+                                        <Text style={{ color: '#000', fontSize: 12, fontWeight: '700' }}>
+                                            {item.status == 'found' ? 'FOUND' : 'MISSING'}
+                                        </Text>
+                                    </View>
                                 </View>
+                                {item.description ? <Text style={{ color: INV_TEXT }}>{item.description}</Text> : null}
+                                {item.location ? <Text style={{ color: INV_TEXT }}>Found at: {item.location}</Text> : null}
+                                {item.dateFound ? <Text style={{ color: INV_TEXT }}>Found on: {item.dateFound}</Text> : null}
+                                {item.foundBy ? <Text style={{ color: INV_TEXT }}>Found by: {item.foundBy}</Text> : null}
+                                {item.status === 'lost' && <View style={{ flexDirection: 'row', gap: 5, marginTop: 8, marginBottom: 8 }}>
+                                    <Button title="Mark Found" bg={ACCENT_ADD} bgPressed={ACCENT_ADD_P} onPress={() => markFound(item)} />
+                                </View>}
                             </View>
-                            {item.description ? <Text style={{ color: INV_TEXT }}>{item.description}</Text> : null}
-                            {item.location ? <Text style={{ color: SUB }}>Found at: {item.location}</Text> : null}
-                            {item.dateFound ? <Text style={{ color: SUB }}>Found on: {item.dateFound}</Text> : null}
-                            {item.foundBy ? <Text style={{ color: SUB }}>Found by: {item.foundBy}</Text> : null}
-                            {item.status === 'lost' && <View style={{ flexDirection: 'row', gap: 10, marginTop: 8, marginBottom: 8 }}>
-                                <Button title="Mark Found" bg={ACCENT_ADD} bgPressed={ACCENT_ADD_P} onPress={() => markFound(item)} />
-                            </View>}
                         </View>
                     )}
                 />

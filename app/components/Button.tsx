@@ -17,9 +17,9 @@ export default function Button({
             onPress={onPress}
             style={({ pressed }) => ({
                 backgroundColor: kind === 'ghost' ? (pressed ? '#F3F4F6' : 'transparent') : (pressed ? bgPressed : bg),
-                borderRadius: 14,
-                paddingVertical: 12,
-                paddingHorizontal: 16,
+                borderRadius: 8,
+                paddingVertical: 10,
+                paddingHorizontal: 5,
                 alignItems: 'center',
                 borderWidth: kind === 'ghost' ? 1 : 0,
                 borderColor: kind === 'ghost' ? BORDER : 'transparent',

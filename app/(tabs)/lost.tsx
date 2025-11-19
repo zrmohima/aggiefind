@@ -35,7 +35,7 @@ export default function ClaimsScreen() {
 
     const renderItem = ({ item }: { item: LostItem }) => (
         <TouchableOpacity onPress={() => setSelected(item)} style={styles.card}>
-            <Image source={{ uri: item.imageUrl }} style={styles.cardImage} />
+            <Image source={{ uri: item.imageUrl || 'https://mint.fiu.edu/wp-content/uploads/2021/10/image-not-available.jpg' }} style={styles.cardImage} />
             <View style={styles.cardContent}>
                 <Text style={styles.cardTitle} numberOfLines={1}>{item.name}</Text>
                 <Text style={styles.cardText}>{item.location}</Text>
@@ -64,7 +64,7 @@ export default function ClaimsScreen() {
             <Modal visible={!!selected} animationType="slide" transparent onRequestClose={() => setSelected(null)}>
                 <View style={styles.overlay}>
                     <View style={styles.modalCard}>
-                        {selected?.imageUrl ? <Image source={{ uri: selected.imageUrl }} style={styles.modalImage} /> : null}
+                        {selected?.imageUrl ? <Image source={{ uri: selected.imageUrl }} style={styles.modalImage} /> : <Image source={{ uri: 'https://mint.fiu.edu/wp-content/uploads/2021/10/image-not-available.jpg' }} style={styles.modalImage} />}
                         <Text style={styles.modalTitle}>{selected?.name}</Text>
                         <Text style={styles.modalMeta}>Location: {selected?.location}</Text>
                         <Text style={styles.modalMeta}>
@@ -97,8 +97,8 @@ const styles = StyleSheet.create({
     cardImage: { width: 100, height: 100, borderRadius: 8 },
     cardContent: { flex: 1, marginLeft: 12 },
     cardTitle: { color: INV_TEXT, fontWeight: "700", fontSize: 16, marginBottom: 4 },
-    cardText: { color: SUB, fontSize: 14, marginBottom: 2 },
-    cardDesc: { color: SUB, marginTop: 4 },
+    cardText: { color: INV_TEXT, fontSize: 14, marginBottom: 2 },
+    cardDesc: { color: INV_TEXT, marginTop: 4 },
 
     overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center", padding: 16 },
     modalCard: { width: "100%", maxWidth: 720, backgroundColor: "#fff", borderRadius: 12, padding: 16 },
