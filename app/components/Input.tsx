@@ -1,5 +1,5 @@
 import { TextInput } from "react-native";
-import { CARD, BORDER, INV_TEXT } from "../constants/color";
+import { BG, BORDER, TEXT } from "../constants/color";
 
 export default function Input(props: any) {
     return (
@@ -7,11 +7,11 @@ export default function Input(props: any) {
             {...props}
             placeholderTextColor="#9CA3AF"
             style={[{
-                backgroundColor: CARD,
-                color: INV_TEXT,
+                backgroundColor: BG,
+                color: TEXT,
                 paddingVertical: 12,
                 paddingHorizontal: 14,
-                borderRadius: 12,
+                borderRadius: 5,
                 borderWidth: 1,
                 borderColor: BORDER
             }, props.style]}

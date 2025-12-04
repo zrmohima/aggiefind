@@ -11,7 +11,7 @@ import Button from "../components/Button";
 import Field from "../components/Field";
 import Header from "../components/Header";
 import Input from "../components/Input";
-import { ACCENT_ADD, ACCENT_ADD_P, BG, BORDER, CARD, INV_TEXT, SUB } from "../constants/color";
+import { ACCENT_ADD, ACCENT_ADD_P, BG, BORDER, INV_TEXT, SUB } from "../constants/color";
 import { LostItem } from "../types/type";
 
 export default function HomeScreen() {
@@ -87,7 +87,7 @@ export default function HomeScreen() {
                     }
                     renderItem={({ item }: { item: LostItem }) => (
                         <View style={{
-                            backgroundColor: CARD, borderColor: BORDER, borderRadius: 8, overflow: 'hidden'
+                            backgroundColor: SUB, borderColor: BORDER, borderRadius: 8, overflow: 'hidden'
                         }}>
 
                             <Image source={{ uri: 'https://mint.fiu.edu/wp-content/uploads/2021/10/image-not-available.jpg' }} style={{ width: '100%', height: 180 }} />
@@ -98,8 +98,6 @@ export default function HomeScreen() {
                                     <Text style={{ color: INV_TEXT, fontSize: 16, fontWeight: '700' }}>
                                         {item.name}
                                     </Text>
-
-                                    {/* Status badge */}
                                     <View style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, backgroundColor: item.status === 'found' ? '#22c55e' : '#fbbf24' }}>
                                         <Text style={{ color: '#000', fontSize: 12, fontWeight: '700' }}>
                                             {item.status == 'found' ? 'FOUND' : 'MISSING'}

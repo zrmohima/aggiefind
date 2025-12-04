@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from "react";
 import {
-    View,
-    Text,
     FlatList,
     Image,
-    TouchableOpacity,
     Modal,
     StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
-import Header from "../components/Header";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Header from "../components/Header";
+import { BG, BORDER, INV_TEXT, SUB } from "../constants/color";
 import { LostItem } from "../types/type";
-import { BG, BORDER, CARD, INV_TEXT, SUB } from "../constants/color";
 
 export default function ClaimsScreen() {
 
@@ -85,7 +85,7 @@ export default function ClaimsScreen() {
 const styles = StyleSheet.create({
     card: {
         flexDirection: "row",
-        backgroundColor: CARD,
+        backgroundColor: SUB,
         borderColor: BORDER,
         borderRadius: 12,
         padding: 12,

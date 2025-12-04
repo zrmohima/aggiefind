@@ -47,6 +47,11 @@ export default function PostScreen() {
 
     const [filteredNMSUUsers, setFilteredNMSUUsers] = useState<string[]>([]);
 
+    const formatter = new Intl.DateTimeFormat('en-US', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -210,17 +215,26 @@ export default function PostScreen() {
 
     const SimilarItemsModal = () => {
         const [modalSearchText, setModalSearchText] = useState('');
-        const normalizedSearchText = modalSearchText.toLowerCase().replace(/\s/g, '');
+        const trimmedSearchText = modalSearchText.toLowerCase().trim();
+        const spacedKeywords = trimmedSearchText.split(/\s+/).filter(kw => kw.length > 0);
+        const contiguousSearchText = trimmedSearchText.replace(/\s/g, '');
+
         const filteredItems = similarItems.filter(item => {
+            if (!trimmedSearchText) {
+                return true;
+            }
             const itemDataString = [
                 item.name,
                 item.description,
                 item.location,
                 item.dropLocation ? item.dropLocation : '',
                 new Date(item.dateFound).toLocaleDateString(),
+                formatter.format(new Date(item.dateFound)),
             ].join(' ').toLowerCase();
             const normalizedItemData = itemDataString.replace(/\s/g, '');
-            return normalizedItemData.includes(normalizedSearchText);
+            const contiguousMatch = normalizedItemData.includes(contiguousSearchText);
+            const keywordMatch = spacedKeywords.every(keyword => itemDataString.includes(keyword));
+            return contiguousMatch || keywordMatch;
         });
 
         return (
