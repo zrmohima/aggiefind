@@ -8,3 +8,4 @@ export const ACCENT_ADD = '#650015';    // crimson for header / add
 export const ACCENT_LIST = '#1D4ED8';
 export const ACCENT_ADD_P = '#aa1526';
 export const ACCENT_LIST_P = '#2563EB';
+export const CRIMSON = '#882345';

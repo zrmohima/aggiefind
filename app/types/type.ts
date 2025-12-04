@@ -6,7 +6,7 @@ export type LostItem = {
     dropLocation?: string;
     imageUrl?: string | null | undefined;
     dateFound: string;
-    foundBy: string;
+    foundBy?: string;
     status: 'lost' | 'claimed' | 'found';
     visibility: 'public' | 'private';
     users: string[];

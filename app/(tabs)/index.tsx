@@ -26,7 +26,7 @@ export default function HomeScreen() {
                 it.name.toLowerCase().includes(q) ||
                 it.description.toLowerCase().includes(q) ||
                 it.location.toLowerCase().includes(q) ||
-                it.foundBy.toLowerCase().includes(q)
+                it.foundBy?.toLowerCase().includes(q)
             );
         });
     })();

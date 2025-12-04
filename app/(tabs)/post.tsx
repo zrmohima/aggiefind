@@ -6,7 +6,7 @@ import React, { useState } from "react";
 import { Alert, FlatList, Image, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "../components/Header";
-import { BG, TEXT } from "../constants/color";
+import { BG, BORDER, CRIMSON, TEXT } from "../constants/color";
 import { LostItem } from "../types/type";
 
 interface FoundItem {
@@ -27,8 +27,7 @@ const NMSU_DROPLOCATIONS = [
     { label: "Zuhl Library", value: "Zuhl Library" },
     { label: "Corbett Center", value: "Corbett Center" },
     { label: "Student Union Building", value: "Student Union Building" },
-    { label: "Frenger Mall", value: "Frenger Mall" },
-    { label: "Other", value: "Other" }
+    { label: "Frenger Mall", value: "Frenger Mall" }
 ];
 
 export default function PostScreen() {
@@ -38,7 +37,7 @@ export default function PostScreen() {
     const [desc, setDesc] = useState('');
     const [loc, setLoc] = useState('');
     const [dropLoc, setDropLoc] = useState(NMSU_DROPLOCATIONS[0].value);
-    const [foundBy, setFoundBy] = useState('');
+    const [wishToDrop, setWishToDrop] = useState(false);
     const valid = name.trim().length > 0;
     const router = useRouter();
     const [image, setImage] = useState('');
@@ -205,17 +204,15 @@ export default function PostScreen() {
             id: String(Date.now()),
             name: name.trim(),
             description: desc.trim(),
-            imageUrl: image || `https://picsum.photos/600/400?random=${Date.now() % 1000}`,
+            imageUrl: image != '' ? image : null,
             location: loc || "Unknown",
-            dropLocation: dropLoc || undefined,
+            dropLocation: wishToDrop ? dropLoc : undefined,
             dateFound: dateTime.toISOString(),
-            foundBy: foundBy || "Anonymous",
             status: postType,
             visibility: visibility ? "public" : "private",
             users: visibility ? [] : selectedNMSUUsers,
             createdAt: Date.now(),
         };
-
         if (postType === "found") {
             await handleFoundItemSubmission(newItem);
         } else {
@@ -317,25 +314,53 @@ export default function PostScreen() {
                     </View>
                 </View>
 
-                <TextInput placeholder="Title" placeholderTextColor="#9CA3AF" value={name} onChangeText={setName} style={[styles.textInput, { color: TEXT }, isMissing('name') && styles.inputError]} />
+                <TextInput placeholder="Title" placeholderTextColor="#9CA3AF" value={name} onChangeText={(text) => { setName(text); text != "" && setMissingFields(missingFields.filter(field => field != "name")); }} style={[styles.textInput, { color: TEXT }, isMissing('name') && styles.inputError]} />
 
                 <TouchableOpacity onPress={pickImage} style={{ height: 180, borderWidth: 2, borderStyle: "dashed", borderRadius: 5, justifyContent: "center", alignItems: "center", marginBottom: 12 }}>
                     {image ? <Image source={{ uri: image }} style={{ width: "100%", height: "100%", borderRadius: 5 }} /> : <Text style={{ color: "#9CA3AF" }}>Tap to add image</Text>}
                 </TouchableOpacity>
 
-                <TextInput placeholder="Description" placeholderTextColor="#9CA3AF" value={desc} onChangeText={setDesc} multiline style={[styles.textInput, { color: TEXT, height: 100, textAlignVertical: 'top' }, isMissing('desc') && styles.inputError]} />
+                <TextInput placeholder="Description" placeholderTextColor="#9CA3AF" value={desc} onChangeText={(text) => { setDesc(text); text != "" && setMissingFields(missingFields.filter(field => field != "desc")); }} multiline style={[styles.textInput, { color: TEXT, height: 100, textAlignVertical: 'top' }, isMissing('desc') && styles.inputError]} />
 
-                <TextInput placeholder="Location" placeholderTextColor="#9CA3AF" value={loc} onChangeText={setLoc} multiline style={[styles.textInput, { color: TEXT }, isMissing('loc') && styles.inputError]} />
+                <TextInput placeholder="Location" placeholderTextColor="#9CA3AF" value={loc} onChangeText={(text) => { setLoc(text); text != "" && setMissingFields(missingFields.filter(field => field != "loc")); }} multiline style={[styles.textInput, { color: TEXT }, isMissing('loc') && styles.inputError]} />
 
-                <Text style={{ marginBottom: 6, color: TEXT }}>Select Drop Location</Text>
-                <View style={{ borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 5, overflow: "hidden", marginBottom: 12 }}>
-                    <Picker style={{ backgroundColor: BG, color: TEXT }} selectedValue={dropLoc} onValueChange={(v) => setDropLoc(v.toString())}>
-                        {NMSU_DROPLOCATIONS.map((item) => (
-                            <Picker.Item key={item.value} label={item.label} value={item.value} />
-                        ))}
-                    </Picker>
+                <View style={styles.radioGroup}>
+                    <Text style={styles.radioLabel}>Do you wish your item to be dropped off at a facility?</Text>
+                    <View style={styles.radioOptions}>
+
+                        <TouchableOpacity
+                            style={styles.radioButton}
+                            onPress={() => setWishToDrop(true)}
+                        >
+                            <View style={styles.radioCircle}>
+                                {wishToDrop && <View style={styles.selectedCircle} />}
+                            </View>
+                            <Text style={styles.radioText}>Yes</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.radioButton}
+                            onPress={() => setWishToDrop(false)}
+                        >
+                            <View style={styles.radioCircle}>
+                                {!wishToDrop && <View style={styles.selectedCircle} />}
+                            </View>
+                            <Text style={styles.radioText}>No</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
+                {wishToDrop && (
+                    <View style={{ marginBottom: 5 }}>
+                        <Text style={{ marginBottom: 6, color: TEXT }}>Select Drop Location</Text>
+                        <View style={{ borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 5, overflow: "hidden", marginBottom: 12 }}>
+                            <Picker style={{ backgroundColor: BG, color: TEXT }} selectedValue={dropLoc} onValueChange={(v) => setDropLoc(v.toString())}>
+                                {NMSU_DROPLOCATIONS.map((item) => (
+                                    <Picker.Item key={item.value} label={item.label} value={item.value} />
+                                ))}
+                            </Picker>
+                        </View>
+                    </View>)}
                 <View style={{ flexDirection: "row", gap: 10, marginBottom: 12 }}>
                     <TouchableOpacity onPress={() => showDateTimePicker("date")} style={{ flex: 1, borderWidth: 1, borderRadius: 5, padding: 12, alignItems: "center" }}>
                         <Text style={{ color: TEXT }}>{new Date(dateTime).toLocaleDateString()}</Text>
@@ -418,7 +443,7 @@ export default function PostScreen() {
                     </Text>
                 </TouchableOpacity>
             </ScrollView>
-        </SafeAreaView>
+        </SafeAreaView >
     );
 }
 
@@ -565,4 +590,55 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         textAlign: "center"
     },
+    radioGroup: {
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        padding: 8,
+        minWidth: 150,
+        marginBottom: 5,
+    },
+    radioLabel: {
+        fontSize: 14,
+        marginBottom: 5,
+        fontWeight: '500',
+        color: TEXT,
+    },
+    radioOptions: {
+        flexDirection: 'row',
+    },
+    radioButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginRight: 15,
+    },
+    radioCircle: {
+        height: 20,
+        width: 20,
+        borderRadius: 10,
+        borderWidth: 2,
+        borderColor: BORDER,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 8,
+    },
+    selectedCircle: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: CRIMSON,
+    },
+    radioText: {
+        fontSize: 16,
+        color: TEXT,
+    },
+    statusView: {
+        padding: 10,
+        borderTopWidth: 1,
+        borderTopColor: BORDER,
+    },
+    statusText: {
+        fontSize: 14,
+        color: TEXT,
+        marginBottom: 5,
+    }
 });
