@@ -9,12 +9,6 @@ import Header from "../components/Header";
 import { BG, BORDER, CRIMSON, TEXT } from "../constants/color";
 import { LostItem } from "../types/type";
 
-interface FoundItem {
-    id: string;
-    name: string;
-    description: string;
-}
-
 const NMSU_USER_EMAILS = [
     "user1@nmsu.edu", "student2@nmsu.edu", "faculty3@nmsu.edu",
     "john.doe@nmsu.edu", "jane.smith@nmsu.edu", "michael.c@nmsu.edu",
@@ -49,7 +43,7 @@ export default function PostScreen() {
     const [selectedNMSUUsers, setSelectedNMSUUsers] = useState<string[]>([]);
     const [nmsuUserInput, setNmsuUserInput] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
-    const [similarItems, setSimilarItems] = useState<FoundItem[]>([]);
+    const [similarItems, setSimilarItems] = useState<LostItem[]>([]);
 
     const [filteredNMSUUsers, setFilteredNMSUUsers] = useState<string[]>([]);
 
@@ -137,19 +131,12 @@ export default function PostScreen() {
             });
     };
 
-    const fetchSimilarItems = async (itemDetails: LostItem): Promise<FoundItem[]> => {
-        console.log("Searching for similar items based on:", itemDetails.name, itemDetails.description);
-
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        if (itemDetails.name.toLowerCase().includes('keys')) {
-            return [
-                { id: "1", name: "Set of Silver Keys", description: "Found near Zuhl Library" },
-                { id: "2", name: "Car Keys with NMSU Lanyard", description: "Found in Corbett Center" },
-                { id: "3", name: "House Keys on Red Fob", description: "Found near Frenger Mall" },
-            ];
-        }
-        return [];
+    const fetchSimilarItems = async (itemDetails: LostItem): Promise<LostItem[]> => {
+        //implement API call to fetch similar items based on itemDetails
+        //for now we will return dummy data
+        return [
+            { ...itemDetails, name: "Set of Silver Keys" },
+        ];
     };
 
     const handleFoundItemSubmission = async (newItem: LostItem) => {
@@ -223,11 +210,18 @@ export default function PostScreen() {
 
     const SimilarItemsModal = () => {
         const [modalSearchText, setModalSearchText] = useState('');
-
-        const filteredItems = similarItems.filter(item =>
-            item.name.toLowerCase().includes(modalSearchText.toLowerCase()) ||
-            item.description.toLowerCase().includes(modalSearchText.toLowerCase())
-        );
+        const normalizedSearchText = modalSearchText.toLowerCase().replace(/\s/g, '');
+        const filteredItems = similarItems.filter(item => {
+            const itemDataString = [
+                item.name,
+                item.description,
+                item.location,
+                item.dropLocation ? item.dropLocation : '',
+                new Date(item.dateFound).toLocaleDateString(),
+            ].join(' ').toLowerCase();
+            const normalizedItemData = itemDataString.replace(/\s/g, '');
+            return normalizedItemData.includes(normalizedSearchText);
+        });
 
         return (
             <Modal
