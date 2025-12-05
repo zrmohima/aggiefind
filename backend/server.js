@@ -33,7 +33,7 @@ app.get('/', (req, res) => {
 
 // Public API: add item
 app.post('/api/items', (req, res) => {
-  const { name, description = '', location = '', dateFound = '', foundBy = '', status, createdAt } = req.body;
+  const { name, description, location, dateFound, foundBy, status, createdAt, postType, dropLocation, imageUrl, visibility, users } = req.body;
   if (!name || name.trim().length === 0) return res.status(400).json({ error: 'Missing name' });
   const id = uuidv4();
   const item = {
@@ -43,8 +43,13 @@ app.post('/api/items', (req, res) => {
     location: (location || '').trim(),
     dateFound: (dateFound || '').trim(),
     foundBy: (foundBy || '').trim(),
-    status: 'lost',
-    createdAt: Date.now()
+    status,
+    createdAt,
+    dropLocation: (dropLocation || '').trim(),
+    imageUrl: (imageUrl || '').trim(),
+    postType,
+    visibility,
+    users
   };
   const db = readDB();
   db.items.unshift(item);
@@ -99,6 +104,14 @@ app.post('/api/user/login', async (req, res) => {
 app.get('/api/user/items', userAuth, (req, res) => {
   const db = readDB();
   res.json(db.items.slice().sort((a, b) => b.createdAt - a.createdAt));
+});
+
+// get specific item details
+app.get('/api/items/:id', (req, res) => {
+  const id = req.params.id;
+  const db = readDB();
+  const item = db.items.find(i => i.id === id);
+  res.json(item);
 });
 
 // user: update item

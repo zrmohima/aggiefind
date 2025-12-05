@@ -1,8 +1,8 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import { Alert, FlatList, Image, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "../components/Header";
@@ -26,7 +26,7 @@ const NMSU_DROPLOCATIONS = [
 
 export default function PostScreen() {
     const [missingFields, setMissingFields] = useState<string[]>([]);
-    const [postType, setPostType] = useState<"lost" | "found">("found");
+    const [postType, setPostType] = useState<"lost" | "found">("lost");
     const [name, setName] = useState('');
     const [desc, setDesc] = useState('');
     const [loc, setLoc] = useState('');
@@ -46,12 +46,43 @@ export default function PostScreen() {
     const [similarItems, setSimilarItems] = useState<LostItem[]>([]);
 
     const [filteredNMSUUsers, setFilteredNMSUUsers] = useState<string[]>([]);
+    const params = useLocalSearchParams();
+    const itemId = params.id;
+    const [originalItem, setOriginalItem] = useState<LostItem | null>(null);
+    const isEditMode = !!itemId;
 
     const formatter = new Intl.DateTimeFormat('en-US', {
         day: 'numeric',
         month: 'long',
         year: 'numeric'
     });
+
+    useEffect(() => {
+        if (isEditMode) {
+            fetch(`http://localhost:4000/api/items/${itemId}`)
+                .then(r => r.json())
+                .then(data => {
+                    setOriginalItem(data);
+                    populateFormState(data);
+                })
+                .catch(err => {
+                    Alert.alert("Error", "Could not load item for editing.");
+                });
+        }
+    }, [itemId]);
+
+    const populateFormState = (item: LostItem) => {
+        setName(item.name);
+        setDesc(item.description);
+        setLoc(item.location);
+        setDropLoc(item.dropLocation || NMSU_DROPLOCATIONS[0].value);
+        setImage(item.imageUrl || '');
+        setPostType(item.postType);
+        setVisibility(item.visibility === 'public');
+        setSelectedNMSUUsers(item.users || []);
+        setDateTime(new Date(item.dateFound));
+    };
+
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -193,7 +224,7 @@ export default function PostScreen() {
         setMissingFields([]);
 
         const newItem: LostItem = {
-            id: String(Date.now()),
+            id: originalItem ? originalItem.id : String(Date.now()),
             name: name.trim(),
             description: desc.trim(),
             imageUrl: image != '' ? image : null,
@@ -203,7 +234,8 @@ export default function PostScreen() {
             status: postType,
             visibility: visibility ? "public" : "private",
             users: visibility ? [] : selectedNMSUUsers,
-            createdAt: Date.now(),
+            postType: postType,
+            createdAt: originalItem ? originalItem.createdAt : Date.now(),
         };
         if (postType === "found") {
             await handleFoundItemSubmission(newItem);
@@ -426,7 +458,6 @@ export default function PostScreen() {
                             )}
                         </View>
 
-                        {/* Selected Emails (Chips) - Changed background color */}
                         {selectedNMSUUsers.length > 0 && (
                             <View>
                                 <Text style={{ marginTop: 8, fontWeight: '500', color: TEXT }}>Selected Emails:</Text>
@@ -447,7 +478,10 @@ export default function PostScreen() {
 
                 <TouchableOpacity onPress={handleSubmit} style={{ backgroundColor: "#882345", padding: 12, borderRadius: 5 }}>
                     <Text style={{ color: "#fff", textAlign: "center", fontWeight: "600" }}>
-                        {postType === "found" ? "Submit Found Item" : "Submit Lost Item"}
+                        {isEditMode
+                            ? "Save Changes"
+                            : (postType === "found" ? "Submit Found Item" : "Submit Lost Item")
+                        }
                     </Text>
                 </TouchableOpacity>
             </ScrollView>
@@ -455,7 +489,6 @@ export default function PostScreen() {
     );
 }
 
-// --- Styles ---
 const styles = StyleSheet.create({
     inputError: {
         borderColor: '#FF0000',

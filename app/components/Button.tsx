@@ -3,13 +3,14 @@ import { ACCENT_ADD, ACCENT_ADD_P, BORDER, INV_TEXT, TEXT } from "../constants/c
 
 export default function Button({
     title, onPress, kind = 'primary',
-    bg = ACCENT_ADD, bgPressed = ACCENT_ADD_P
+    bg = ACCENT_ADD, bgPressed = ACCENT_ADD_P, style
 }: {
     title: string;
     onPress: () => void;
     kind?: 'primary' | 'ghost';
     bg?: string;
     bgPressed?: string;
+    style?: any
 }) {
     return (
         <Pressable
@@ -23,10 +24,11 @@ export default function Button({
                 alignItems: 'center',
                 borderWidth: kind === 'ghost' ? 1 : 0,
                 borderColor: kind === 'ghost' ? BORDER : 'transparent',
-                width: '100%'
+                width: '100%',
+                ...style
             })}
         >
-            <Text style={{ color: kind === 'ghost' ? TEXT : INV_TEXT, fontSize: 16, fontWeight: '700' }}>{title}</Text>
+            <Text style={{ color: kind === 'ghost' ? TEXT : INV_TEXT, fontSize: 15, fontWeight: '700' }}>{title}</Text>
         </Pressable>
     );
 }

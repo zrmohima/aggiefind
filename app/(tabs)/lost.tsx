@@ -1,5 +1,7 @@
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+    Alert,
     FlatList,
     Image,
     Modal,
@@ -9,12 +11,13 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Button from "../components/Button";
 import Header from "../components/Header";
-import { BG, BORDER, INV_TEXT, SUB } from "../constants/color";
+import { ACCENT_ADD, ACCENT_ADD_P, BG, BORDER, INV_TEXT, SUB } from "../constants/color";
 import { LostItem } from "../types/type";
 
 export default function ClaimsScreen() {
-
+    const router = useRouter();
     const [items, setItems] = useState<LostItem[]>([]);
     const [selected, setSelected] = useState<LostItem | null>(null);
 
@@ -33,6 +36,31 @@ export default function ClaimsScreen() {
         loadItemsFromBackend();
     }, []);
 
+    const handleEdit = (item: LostItem): void => {
+        router.push({
+            pathname: '/post',
+            params: { id: item.id }
+        });
+    };
+
+    const handleDelete = (item: LostItem): void => {
+        //check if the same user is deleting the post and status and post type match
+        Alert.alert(
+            "Confirm Deletion",
+            `Are you sure you want to delete item ${item.name}?`,
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => {
+                        console.log(`Deleting item with ID: ${item.id}`);
+                    }
+                },
+            ]
+        );
+    };
+
     const renderItem = ({ item }: { item: LostItem }) => (
         <TouchableOpacity onPress={() => setSelected(item)} style={styles.card}>
             <Image source={{ uri: item.imageUrl || 'https://mint.fiu.edu/wp-content/uploads/2021/10/image-not-available.jpg' }} style={styles.cardImage} />
@@ -42,10 +70,12 @@ export default function ClaimsScreen() {
                 <Text style={styles.cardText}>{item.dateFound ? new Date(item.dateFound).toLocaleString() : ""}</Text>
                 <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
             </View>
-            <View style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, backgroundColor: item.status === 'found' ? '#22c55e' : '#fbbf24' }}>
-                <Text style={{ color: '#000', fontSize: 12, fontWeight: '700' }}>
+            <View>
+                <Text style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, backgroundColor: item.status === 'found' ? '#22c55e' : '#fbbf24', color: '#000', fontSize: 12, fontWeight: '700' }}>
                     {item.status == 'found' ? 'FOUND' : 'MISSING'}
                 </Text>
+                {item.status == item.postType && <Button style={{ marginTop: 5, marginBottom: 5, padding: 2, backgroundColor: INV_TEXT }} kind="ghost" title="Edit Item" bg={ACCENT_ADD} bgPressed={ACCENT_ADD_P} onPress={() => handleEdit(item)} />}
+                {item.status == item.postType && <Button style={{ padding: 6, backgroundColor: ACCENT_ADD }} title="Delete Item" bg={ACCENT_ADD} bgPressed={ACCENT_ADD_P} onPress={() => handleDelete(item)} />}
             </View>
         </TouchableOpacity>
     );

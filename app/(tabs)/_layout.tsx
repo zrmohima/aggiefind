@@ -1,11 +1,10 @@
 // app/tabs/_layout.js
-import React from 'react';
-import { Tabs } from 'expo-router';
-import { Platform } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Foundation from '@expo/vector-icons/Foundation';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { Tabs } from 'expo-router';
+import React from 'react';
+import { Platform } from 'react-native';
 
 export default function TabsLayout() {
     return (
@@ -30,7 +29,7 @@ export default function TabsLayout() {
                 )
             }} />
             <Tabs.Screen name="lost" options={{
-                title: 'Lost', tabBarIcon: ({ color }) => (
+                title: 'My Items', tabBarIcon: ({ color }) => (
                     <Foundation name="alert" size={20} color={color} />
                 )
             }} />

@@ -16,7 +16,12 @@
       "dateFound": "2025-11-17",
       "foundBy": "Emma",
       "status": "found",
-      "createdAt": 1763422970861
+      "postType": "lost",
+      "createdAt": 1763422970861,
+      "dropLocation": "Zuhl Library",
+      "imageUrl": "",
+      "visibility": "public",
+      "users": []
     },
     {
       "id": "3cf232b6-bc2a-464a-8dcf-0fe4b6d6c323",
@@ -26,7 +31,14 @@
       "dateFound": "2025-11-17",
       "foundBy": "rhrh",
       "status": "lost",
-      "createdAt": 1763411269807
+      "postType": "lost",
+      "createdAt": 1763411269807,
+      "dropLocation": "Zuhl Library",
+      "imageUrl": "",
+      "visibility": "private",
+      "users": [
+        "alumni.g@nmsu.edu"
+      ]
     },
     {
       "id": "ac72dec0-10d7-412f-9916-26898d7c89f8",
@@ -36,7 +48,12 @@
       "dateFound": "2025-11-17",
       "foundBy": "john doe",
       "status": "lost",
-      "createdAt": 1763403558400
+      "postType": "lost",
+      "createdAt": 1763403558400,
+      "dropLocation": "Corbett Center",
+      "imageUrl": "",
+      "visibility": "public",
+      "users": []
     },
     {
       "id": "874a5787-ddfa-4c3f-898f-34fc02e278e2",
@@ -46,7 +63,18 @@
       "dateFound": "2025-11-14",
       "foundBy": "zarin",
       "status": "lost",
-      "createdAt": 1763094609045
+      "postType": "lost",
+      "createdAt": 1763094609045,
+      "dropLocation": "Corbett Center",
+      "imageUrl": "",
+      "visibility": "private",
+      "users": [
+        "alumni.g@nmsu.edu",
+        "engineering.s@nmsu.edu",
+        "library.h@nmsu.edu",
+        "researcher10@nmsu.edu",
+        "campus.admin@nmsu.edu"
+      ]
     },
     {
       "id": "0e61e877-8b3c-474c-b997-da0da74cb017",
@@ -56,7 +84,12 @@
       "dateFound": "2025-11-14",
       "foundBy": "Popaye",
       "status": "found",
-      "createdAt": 1763094473445
+      "postType": "lost",
+      "createdAt": 1763094473445,
+      "dropLocation": "Frenger Mall",
+      "imageUrl": "",
+      "visibility": "public",
+      "users": []
     },
     {
       "id": "7bfac25f-ae7e-487e-8867-a63b3123b4cb",
@@ -66,7 +99,16 @@
       "dateFound": "2025-11-14",
       "foundBy": "Mike",
       "status": "found",
-      "createdAt": 1763094374003
+      "postType": "lost",
+      "createdAt": 1763094374003,
+      "dropLocation": "Frenger Mall",
+      "imageUrl": "",
+      "visibility": "private",
+      "users": [
+        "alumni.g@nmsu.edu",
+        "researcher10@nmsu.edu",
+        "campus.admin@nmsu.edu"
+      ]
     }
   ]
 }

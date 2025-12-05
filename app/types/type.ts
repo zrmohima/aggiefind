@@ -7,6 +7,7 @@ export type LostItem = {
     imageUrl?: string | null | undefined;
     dateFound: string;
     foundBy?: string;
+    postType: 'lost' | 'found';
     status: 'lost' | 'claimed' | 'found';
     visibility: 'public' | 'private';
     users: string[];
