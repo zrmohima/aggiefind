@@ -4,6 +4,11 @@ export type LostItem = {
     description: string;
     location: string;
     dropLocation?: string;
+    // whether the poster wants their contact/info shared with finders
+    shareContact?: boolean;
+    // optional contact info (only when shareContact is true)
+    contactName?: string;
+    contactPhone?: string;
     imageUrl?: string | null | undefined;
     dateFound: string;
     foundBy?: string;

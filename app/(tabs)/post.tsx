@@ -32,6 +32,9 @@ export default function PostScreen() {
     const [loc, setLoc] = useState('');
     const [dropLoc, setDropLoc] = useState(NMSU_DROPLOCATIONS[0].value);
     const [wishToDrop, setWishToDrop] = useState(false);
+    const [shareInfo, setShareInfo] = useState(false);
+    const [contactName, setContactName] = useState('');
+    const [contactPhone, setContactPhone] = useState('');
     const valid = name.trim().length > 0;
     const router = useRouter();
     const [image, setImage] = useState('');
@@ -81,6 +84,9 @@ export default function PostScreen() {
         setVisibility(item.visibility === 'public');
         setSelectedNMSUUsers(item.users || []);
         setDateTime(new Date(item.dateFound));
+        setShareInfo(item.shareContact ?? false);
+        setContactName(item.contactName ?? '');
+        setContactPhone(item.contactPhone ?? '');
     };
 
     const pickImage = async () => {
@@ -147,20 +153,20 @@ export default function PostScreen() {
             Alert.alert('Missing name', 'Please enter an item name.');
             return;
         }
-
-        const endpoint = postType === "lost"
-            ? 'http://localhost:4000/api/lost-items'
-            : 'http://localhost:4000/api/found-items';
-
-        fetch(endpoint, {
+        // backend expects items to be posted to /api/items (single collection)
+        fetch('http://localhost:4000/api/items', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newItem)
         })
             .then(r => r.json())
             .then(data => {
-                Alert.alert('Success', `${postType === 'lost' ? 'Lost' : 'Found'} Item submitted!`);
-                router.navigate('/');
+                // show a confirmation and navigate to the main tabs when user acknowledges
+                Alert.alert(
+                    'Success',
+                    `${postType === 'lost' ? 'Lost' : 'Found'} Item submitted!`,
+                    [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
+                );
             })
             .catch(err => {
                 Alert.alert('Error', `Could not submit item: ${String(err).slice(0, 50)}`);
@@ -193,6 +199,9 @@ export default function PostScreen() {
         setImage('');
         setDropLoc(NMSU_DROPLOCATIONS[0].value);
         setVisibility(true);
+        setShareInfo(false);
+        setContactName('');
+        setContactPhone('');
         setDateTime(new Date());
         setSelectedNMSUUsers([]);
         setSimilarItems([]);
@@ -208,12 +217,18 @@ export default function PostScreen() {
         if (!visibility && selectedNMSUUsers.length === 0) {
             requiredFields.users = selectedNMSUUsers;
         }
+        if (shareInfo) {
+            requiredFields.contactName = contactName.trim();
+            requiredFields.contactPhone = contactPhone.trim();
+        }
 
         const errors: string[] = [];
         if (!requiredFields.name) errors.push('name');
         if (!requiredFields.desc) errors.push('desc');
         if (!requiredFields.loc) errors.push('loc');
         if (requiredFields.users && requiredFields.users.length === 0) errors.push('users');
+    if (shareInfo && (!requiredFields.contactName || (typeof requiredFields.contactName === 'string' && requiredFields.contactName.length === 0))) errors.push('contactName');
+    if (shareInfo && (!requiredFields.contactPhone || (typeof requiredFields.contactPhone === 'string' && requiredFields.contactPhone.length === 0))) errors.push('contactPhone');
 
         if (errors.length > 0) {
             setMissingFields(errors);
@@ -230,6 +245,9 @@ export default function PostScreen() {
             imageUrl: image != '' ? image : null,
             location: loc || "Unknown",
             dropLocation: wishToDrop ? dropLoc : undefined,
+            shareContact: shareInfo,
+            contactName: shareInfo ? contactName.trim() : undefined,
+            contactPhone: shareInfo ? contactPhone.trim() : undefined,
             dateFound: dateTime.toISOString(),
             status: postType,
             visibility: visibility ? "public" : "private",
@@ -399,6 +417,41 @@ export default function PostScreen() {
                                     <Picker.Item key={item.value} label={item.label} value={item.value} />
                                 ))}
                             </Picker>
+                        </View>
+                        {/* New share-info question shown after drop location */}
+                        <View style={{ marginBottom: 12 }}>
+                            <Text style={{ marginBottom: 6, color: TEXT }}>Do you want to share your information?</Text>
+                            <View style={{ flexDirection: 'row' }}>
+                                <TouchableOpacity onPress={() => setShareInfo(true)} style={{ padding: 8, marginRight: 8, backgroundColor: shareInfo ? "#882345" : "#f0f0f0", borderRadius: 5 }}>
+                                    <Text style={{ color: shareInfo ? "#fff" : "#111827" }}>Yes</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => setShareInfo(false)} style={{ padding: 8, backgroundColor: shareInfo ? "#f0f0f0" : "#882345", borderRadius: 5 }}>
+                                    <Text style={{ color: shareInfo ? "#111827" : "#fff" }}>No</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {shareInfo && (
+                                <View style={{ marginTop: 12 }}>
+                                    <Text style={{ marginBottom: 6, color: TEXT }}>Contact name</Text>
+                                    <TextInput
+                                        placeholder="Your name"
+                                        placeholderTextColor="#9CA3AF"
+                                        value={contactName}
+                                        onChangeText={(t) => { setContactName(t); t != "" && setMissingFields(missingFields.filter(f => f !== 'contactName')); }}
+                                        style={[styles.textInput, { color: TEXT }, isMissing('contactName') && styles.inputError]}
+                                    />
+
+                                    <Text style={{ marginBottom: 6, marginTop: 8, color: TEXT }}>Phone number</Text>
+                                    <TextInput
+                                        placeholder="e.g., 575-123-4567"
+                                        placeholderTextColor="#9CA3AF"
+                                        value={contactPhone}
+                                        onChangeText={(t) => { setContactPhone(t); t != "" && setMissingFields(missingFields.filter(f => f !== 'contactPhone')); }}
+                                        style={[styles.textInput, { color: TEXT }, isMissing('contactPhone') && styles.inputError]}
+                                        keyboardType="phone-pad"
+                                    />
+                                </View>
+                            )}
                         </View>
                     </View>)}
                 <View style={{ flexDirection: "row", gap: 10, marginBottom: 12 }}>

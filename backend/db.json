@@ -9,6 +9,36 @@
   ],
   "items": [
     {
+      "id": "dbb176d9-4065-464f-81d2-211ad3dbb8ca",
+      "name": "headware",
+      "description": "blue cap",
+      "location": "SH",
+      "dateFound": "2025-12-07T19:05:28.751Z",
+      "foundBy": "",
+      "status": "lost",
+      "createdAt": 1765134370118,
+      "dropLocation": "",
+      "imageUrl": "blob:http://localhost:8081/abe5b835-bf3d-409b-a29b-5691510dfbcd",
+      "postType": "lost",
+      "visibility": "public",
+      "users": []
+    },
+    {
+      "id": "d9082675-1749-4f7b-a768-2c68ed5ab839",
+      "name": "cap",
+      "description": "blue cap",
+      "location": "Science Hall",
+      "dateFound": "2025-12-07T18:53:54.280Z",
+      "foundBy": "",
+      "status": "lost",
+      "createdAt": 1765133986965,
+      "dropLocation": "Zuhl Library",
+      "imageUrl": "",
+      "postType": "lost",
+      "visibility": "public",
+      "users": []
+    },
+    {
       "id": "3664669f-8a0b-4451-9ffb-971fee27b642",
       "name": "bandage",
       "description": "kjjh",

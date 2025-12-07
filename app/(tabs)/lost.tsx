@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
+import { useFocusEffect } from '@react-navigation/native';
 import {
     Alert,
     FlatList,
@@ -32,9 +33,12 @@ export default function ClaimsScreen() {
             });
     };
 
-    useEffect(() => {
-        loadItemsFromBackend();
-    }, []);
+    // reload items whenever this screen gains focus so newly posted items appear
+    useFocusEffect(
+        React.useCallback(() => {
+            loadItemsFromBackend();
+        }, [])
+    );
 
     const handleEdit = (item: LostItem): void => {
         router.push({
