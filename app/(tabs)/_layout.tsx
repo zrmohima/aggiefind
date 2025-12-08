@@ -1,12 +1,22 @@
-// app/tabs/_layout.js
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Foundation from '@expo/vector-icons/Foundation';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Tabs, useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 export default function TabsLayout() {
+    const router = useRouter();
+
+    useEffect(() => {
+        if (Platform.OS == 'web') {
+            const token = typeof window !== 'undefined' ? window.sessionStorage.getItem('aggiefind_token') : null;
+            if (!token) {
+                router.replace('/');
+            }
+        }
+    }, []);
+
     return (
         <Tabs
             screenOptions={{

@@ -119,7 +119,7 @@ export default function HomeScreen() {
                             backgroundColor: SUB, borderColor: BORDER, borderRadius: 8, overflow: 'hidden'
                         }}>
 
-                            <Image source={{ uri: 'https://mint.fiu.edu/wp-content/uploads/2021/10/image-not-available.jpg' }} style={{ width: '100%', height: 180 }} />
+                            <Image source={{ uri: item?.imageUrl || 'https://mint.fiu.edu/wp-content/uploads/2021/10/image-not-available.jpg' }} style={{ width: '100%', height: 180 }} />
                             <View style={{
                                 padding: 12, gap: 6
                             }}>

@@ -9,6 +9,8 @@ export type LostItem = {
     // optional contact info (only when shareContact is true)
     contactName?: string;
     contactPhone?: string;
+    creatorName: string;
+    creatorEmail: string;
     imageUrl?: string | null | undefined;
     dateFound: string;
     foundBy?: string;

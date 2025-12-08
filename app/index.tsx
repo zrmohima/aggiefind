@@ -67,7 +67,7 @@ export default function AuthScreen() {
                 if (typeof window !== 'undefined' && window.sessionStorage) {
                     // use sessionStorage so each browser tab maintains its own session
                     window.sessionStorage.setItem('aggiefind_token', data.token);
-                    window.sessionStorage.setItem('aggiefind_user', JSON.stringify(data.user || { username: loginUsername }));
+                    window.sessionStorage.setItem('aggiefind_user', JSON.stringify(data.user));
                 }
             } catch (e) { }
             router.replace('/(tabs)');

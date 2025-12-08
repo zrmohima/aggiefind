@@ -25,6 +25,8 @@ const NMSU_DROPLOCATIONS = [
 ];
 
 export default function PostScreen() {
+    const [creatorName, setCreatorName] = useState('');
+    const [creatorEmail, setCreatorEmail] = useState('');
     const [pendingFoundItem, setPendingFoundItem] = useState<LostItem | null>(null);
     const [missingFields, setMissingFields] = useState<string[]>([]);
     const [postType, setPostType] = useState<"lost" | "found">("lost");
@@ -62,6 +64,10 @@ export default function PostScreen() {
     });
 
     useEffect(() => {
+        if (Platform.OS === 'web') {
+            setCreatorName(JSON.parse(window.sessionStorage.getItem('aggiefind_user') || '').name || '');
+            setCreatorEmail(JSON.parse(window.sessionStorage.getItem('aggiefind_user') || '').email || '');
+        }
         if (isEditMode) {
             fetch(`http://localhost:4000/api/items/${itemId}`)
                 .then(r => r.json())
@@ -230,8 +236,8 @@ export default function PostScreen() {
         if (!requiredFields.desc) errors.push('desc');
         if (!requiredFields.loc) errors.push('loc');
         if (requiredFields.users && requiredFields.users.length === 0) errors.push('users');
-    if (shareInfo && (!requiredFields.contactName || (typeof requiredFields.contactName === 'string' && requiredFields.contactName.length === 0))) errors.push('contactName');
-    if (shareInfo && (!requiredFields.contactPhone || (typeof requiredFields.contactPhone === 'string' && requiredFields.contactPhone.length === 0))) errors.push('contactPhone');
+        if (shareInfo && (!requiredFields.contactName || (typeof requiredFields.contactName === 'string' && requiredFields.contactName.length === 0))) errors.push('contactName');
+        if (shareInfo && (!requiredFields.contactPhone || (typeof requiredFields.contactPhone === 'string' && requiredFields.contactPhone.length === 0))) errors.push('contactPhone');
 
         if (errors.length > 0) {
             setMissingFields(errors);
@@ -249,6 +255,8 @@ export default function PostScreen() {
             location: loc || "Unknown",
             dropLocation: wishToDrop ? dropLoc : undefined,
             shareContact: shareInfo,
+            creatorName,
+            creatorEmail,
             contactName: shareInfo ? contactName.trim() : undefined,
             contactPhone: shareInfo ? contactPhone.trim() : undefined,
             dateFound: dateTime.toISOString(),

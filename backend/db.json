@@ -15,6 +15,14 @@
       "name": "test2",
       "email": "test2@nmsu.edu",
       "createdAt": 1765173910912
+    },
+    {
+      "id": "82b4d1a3-1501-42b9-9f1e-3830590738d4",
+      "username": "datta297@nmsu.edu",
+      "passwordHash": "$2b$10$L5cFyHV0A/OU38owPp/AauuAcjFzcuBhzNjakyNTcMtDUQwqAElH.",
+      "name": "Srinivas",
+      "email": "datta297@nmsu.edu",
+      "createdAt": 1765188818200
     }
   ],
   "items": []
