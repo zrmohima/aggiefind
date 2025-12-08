@@ -99,7 +99,7 @@ export default function ClaimsScreen() {
 
                     {/* If owner and there's a claim, show confirm button */}
                     {item.pendingClaim ? (
-                        <Button title={`Confirm (${item.pendingClaim.desiredStatus})`} onPress={() => {
+                        <Button title={`Confirm (returned)`} onPress={() => {
                             // confirm as owner
                             const headers: any = { 'Content-Type': 'application/json' };
                             try {

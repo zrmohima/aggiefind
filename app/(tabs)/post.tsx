@@ -191,16 +191,9 @@ export default function PostScreen() {
     };
 
     const handleFoundItemSubmission = async (newItem: LostItem) => {
-        const similar = await fetchSimilarItems(newItem);
-
-        if (similar.length > 0) {
-            setSimilarItems(similar);
-            setPendingFoundItem(newItem);
-            setModalVisible(true);
-        } else {
-            postItemToApi(newItem);
-            resetForm();
-        }
+        // skip similar-items modal for a simpler flow: submit found posts immediately
+        postItemToApi(newItem);
+        resetForm();
     };
 
     const resetForm = () => {
@@ -368,8 +361,6 @@ export default function PostScreen() {
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: BG }}>
             <Header title="Post" />
-
-            {SimilarItemsModal()}
 
             <ScrollView contentContainerStyle={{ padding: 16 }}>
                 <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 12 }}>Post an Item</Text>
