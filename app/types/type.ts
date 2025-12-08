@@ -17,4 +17,11 @@ export type LostItem = {
     visibility: 'public' | 'private';
     users: string[];
     createdAt: number;
+    pendingClaim?: {
+        byId: string;
+        byName: string;
+        byEmail?: string;
+        desiredStatus: string;
+        at: number;
+    };
 };

@@ -155,9 +155,17 @@ export default function PostScreen() {
             return;
         }
         // backend expects items to be posted to /api/items (single collection)
+        const headers: any = { 'Content-Type': 'application/json' };
+        try {
+            if (typeof window !== 'undefined' && window.sessionStorage) {
+                const t = window.sessionStorage.getItem('aggiefind_token');
+                if (t) headers['Authorization'] = `Bearer ${t}`;
+            }
+        } catch (e) { }
+
         fetch('http://localhost:4000/api/items', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify(newItem)
         })
             .then(r => r.json())
@@ -424,42 +432,43 @@ export default function PostScreen() {
                                 ))}
                             </Picker>
                         </View>
-                        {/* New share-info question shown after drop location */}
-                        <View style={{ marginBottom: 12 }}>
-                            <Text style={{ marginBottom: 6, color: TEXT }}>Do you want to share your information?</Text>
-                            <View style={{ flexDirection: 'row' }}>
-                                <TouchableOpacity onPress={() => setShareInfo(true)} style={{ padding: 8, marginRight: 8, backgroundColor: shareInfo ? "#882345" : "#f0f0f0", borderRadius: 5 }}>
-                                    <Text style={{ color: shareInfo ? "#fff" : "#111827" }}>Yes</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => setShareInfo(false)} style={{ padding: 8, backgroundColor: shareInfo ? "#f0f0f0" : "#882345", borderRadius: 5 }}>
-                                    <Text style={{ color: shareInfo ? "#111827" : "#fff" }}>No</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            {shareInfo && (
-                                <View style={{ marginTop: 12 }}>
-                                    <Text style={{ marginBottom: 6, color: TEXT }}>Contact name</Text>
-                                    <TextInput
-                                        placeholder="Your name"
-                                        placeholderTextColor="#9CA3AF"
-                                        value={contactName}
-                                        onChangeText={(t) => { setContactName(t); t != "" && setMissingFields(missingFields.filter(f => f !== 'contactName')); }}
-                                        style={[styles.textInput, { color: TEXT }, isMissing('contactName') && styles.inputError]}
-                                    />
-
-                                    <Text style={{ marginBottom: 6, marginTop: 8, color: TEXT }}>Phone number</Text>
-                                    <TextInput
-                                        placeholder="e.g., 575-123-4567"
-                                        placeholderTextColor="#9CA3AF"
-                                        value={contactPhone}
-                                        onChangeText={(t) => { setContactPhone(t); t != "" && setMissingFields(missingFields.filter(f => f !== 'contactPhone')); }}
-                                        style={[styles.textInput, { color: TEXT }, isMissing('contactPhone') && styles.inputError]}
-                                        keyboardType="phone-pad"
-                                    />
-                                </View>
-                            )}
-                        </View>
                     </View>)}
+
+                {/* Share contact is now independent of drop-off choice */}
+                <View style={{ marginBottom: 12 }}>
+                    <Text style={{ marginBottom: 6, color: TEXT }}>Do you want to share your information?</Text>
+                    <View style={{ flexDirection: 'row' }}>
+                        <TouchableOpacity onPress={() => setShareInfo(true)} style={{ padding: 8, marginRight: 8, backgroundColor: shareInfo ? "#882345" : "#f0f0f0", borderRadius: 5 }}>
+                            <Text style={{ color: shareInfo ? "#fff" : "#111827" }}>Yes</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => setShareInfo(false)} style={{ padding: 8, backgroundColor: shareInfo ? "#f0f0f0" : "#882345", borderRadius: 5 }}>
+                            <Text style={{ color: shareInfo ? "#111827" : "#fff" }}>No</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {shareInfo && (
+                        <View style={{ marginTop: 12 }}>
+                            <Text style={{ marginBottom: 6, color: TEXT }}>Contact name</Text>
+                            <TextInput
+                                placeholder="Your name"
+                                placeholderTextColor="#9CA3AF"
+                                value={contactName}
+                                onChangeText={(t) => { setContactName(t); t != "" && setMissingFields(missingFields.filter(f => f !== 'contactName')); }}
+                                style={[styles.textInput, { color: TEXT }, isMissing('contactName') && styles.inputError]}
+                            />
+
+                            <Text style={{ marginBottom: 6, marginTop: 8, color: TEXT }}>Phone number</Text>
+                            <TextInput
+                                placeholder="e.g., 575-123-4567"
+                                placeholderTextColor="#9CA3AF"
+                                value={contactPhone}
+                                onChangeText={(t) => { setContactPhone(t); t != "" && setMissingFields(missingFields.filter(f => f !== 'contactPhone')); }}
+                                style={[styles.textInput, { color: TEXT }, isMissing('contactPhone') && styles.inputError]}
+                                keyboardType="phone-pad"
+                            />
+                        </View>
+                    )}
+                </View>
                 <View style={{ flexDirection: "row", gap: 10, marginBottom: 12 }}>
                     <TouchableOpacity onPress={() => showDateTimePicker("date")} style={{ flex: 1, borderWidth: 1, borderRadius: 5, padding: 12, alignItems: "center" }}>
                         <Text style={{ color: TEXT }}>{new Date(dateTime).toLocaleDateString()}</Text>

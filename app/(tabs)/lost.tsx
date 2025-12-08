@@ -1,6 +1,6 @@
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
     Alert,
     FlatList,
@@ -23,13 +23,24 @@ export default function ClaimsScreen() {
     const [selected, setSelected] = useState<LostItem | null>(null);
 
     const loadItemsFromBackend = () => {
-        fetch('http://localhost:4000/api/items')
-            .then(r => r.json())
+        const headers: any = {};
+        try {
+            if (typeof window !== 'undefined' && window.sessionStorage) {
+                const t = window.sessionStorage.getItem('aggiefind_token');
+                if (t) headers['Authorization'] = `Bearer ${t}`;
+            }
+        } catch (e) { }
+
+        fetch('http://localhost:4000/api/user/items', { headers })
+            .then(r => {
+                if (!r.ok) throw new Error('Unauthorized');
+                return r.json();
+            })
             .then(data => {
                 setItems(data);
             })
             .catch(err => {
-                console.log('Error loading items:', err);
+                console.log('Error loading user items:', err);
             });
     };
 
@@ -74,13 +85,45 @@ export default function ClaimsScreen() {
                 <Text style={styles.cardText}>{item.dateFound ? new Date(item.dateFound).toLocaleString() : ""}</Text>
                 <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
             </View>
-            <View>
-                <Text style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, backgroundColor: item.status === 'found' ? '#22c55e' : '#fbbf24', color: '#000', fontSize: 12, fontWeight: '700' }}>
-                    {item.status == 'found' ? 'FOUND' : 'MISSING'}
-                </Text>
-                {item.status == item.postType && <Button style={{ marginTop: 5, marginBottom: 5, padding: 2, backgroundColor: INV_TEXT }} kind="ghost" title="Edit Item" bg={ACCENT_ADD} bgPressed={ACCENT_ADD_P} onPress={() => handleEdit(item)} />}
-                {item.status == item.postType && <Button style={{ padding: 6, backgroundColor: ACCENT_ADD }} title="Delete Item" bg={ACCENT_ADD} bgPressed={ACCENT_ADD_P} onPress={() => handleDelete(item)} />}
-            </View>
+                <View>
+                    <Text style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, backgroundColor: item.status === 'found' ? '#22c55e' : '#fbbf24', color: '#000', fontSize: 12, fontWeight: '700' }}>
+                        {item.status == 'found' ? 'FOUND' : 'MISSING'}
+                    </Text>
+
+                    {/* Show pending claim information if present */}
+                    {item.pendingClaim ? (
+                        <Text style={{ color: '#000', marginTop: 6 }}>Claim by: {item.pendingClaim.byName}</Text>
+                    ) : null}
+
+                    {item.status == item.postType && <Button style={{ marginTop: 5, marginBottom: 5, padding: 2, backgroundColor: INV_TEXT }} kind="ghost" title="Edit Item" bg={ACCENT_ADD} bgPressed={ACCENT_ADD_P} onPress={() => handleEdit(item)} />}
+
+                    {/* If owner and there's a claim, show confirm button */}
+                    {item.pendingClaim ? (
+                        <Button title={`Confirm (${item.pendingClaim.desiredStatus})`} onPress={() => {
+                            // confirm as owner
+                            const headers: any = { 'Content-Type': 'application/json' };
+                            try {
+                                if (typeof window !== 'undefined' && window.sessionStorage) {
+                                    const t = window.sessionStorage.getItem('aggiefind_token');
+                                    if (t) headers['Authorization'] = `Bearer ${t}`;
+                                }
+                            } catch (e) { }
+                            fetch(`http://localhost:4000/api/user/items/${item.id}`, {
+                                method: 'PUT', headers, body: JSON.stringify({ action: 'confirm' })
+                            })
+                                .then(r => r.json())
+                                .then(data => {
+                                    if (data && data.deleted) {
+                                        Alert.alert('Confirmed', 'Item resolved and removed from the list.');
+                                    } else {
+                                        Alert.alert('Confirmed', 'Item status updated.');
+                                    }
+                                    loadItemsFromBackend();
+                                })
+                                .catch(err => console.log('Error confirming claim:', err));
+                        }} />
+                    ) : null}
+                </View>
         </TouchableOpacity>
     );
 

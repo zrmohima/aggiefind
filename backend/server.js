@@ -33,9 +33,31 @@ app.get('/', (req, res) => {
 
 // Public API: add item
 app.post('/api/items', (req, res) => {
-  const { name, description, location, dateFound, foundBy, status, createdAt, postType, dropLocation, imageUrl, visibility, users } = req.body;
+  const { name, description, location, dateFound, foundBy, status, createdAt, postType, dropLocation, imageUrl, visibility, users, shareContact, contactName, contactPhone } = req.body;
   if (!name || name.trim().length === 0) return res.status(400).json({ error: 'Missing name' });
   const id = uuidv4();
+
+  // try to extract user from Authorization header (optional)
+  let creatorId = null, creatorName = null, creatorEmail = null;
+  try {
+    const auth = req.headers.authorization;
+    if (auth && auth.startsWith('Bearer ')) {
+      const token = auth.slice(7);
+      const payload = jwt.verify(token, JWT_SECRET);
+      creatorId = payload.userId;
+      creatorName = payload.username;
+      // lookup email/name in db
+      const db = readDB();
+      const u = db.users.find(x => x.id === creatorId || x.username === payload.username);
+      if (u) {
+        creatorName = u.name || u.username;
+        creatorEmail = u.email || u.username;
+      }
+    }
+  } catch (e) {
+    // ignore invalid token — item will be anonymous
+  }
+
   const item = {
     id,
     name: name.trim(),
@@ -43,13 +65,22 @@ app.post('/api/items', (req, res) => {
     location: (location || '').trim(),
     dateFound: (dateFound || '').trim(),
     foundBy: (foundBy || '').trim(),
-    status,
-    createdAt,
+    status: status || (postType === 'found' ? 'found' : 'lost'),
+    createdAt: createdAt || Date.now(),
     dropLocation: (dropLocation || '').trim(),
     imageUrl: (imageUrl || '').trim(),
     postType,
     visibility,
-    users
+    users: users || [],
+    shareContact: !!shareContact,
+    contactName: contactName || null,
+    contactPhone: contactPhone || null,
+    creatorId,
+    creatorName,
+    creatorEmail,
+    pendingClaim: null,
+    resolvedById: null,
+    resolvedBy: null
   };
   const db = readDB();
   db.items.unshift(item);
@@ -121,10 +152,11 @@ app.post('/api/user/register', async (req, res) => {
   }
 });
 
-// user: list items
+// user: list items (only items created by this user)
 app.get('/api/user/items', userAuth, (req, res) => {
   const db = readDB();
-  res.json(db.items.slice().sort((a, b) => b.createdAt - a.createdAt));
+  const rows = db.items.filter(i => i.creatorId === req.user.userId).slice().sort((a, b) => b.createdAt - a.createdAt);
+  res.json(rows);
 });
 
 // get specific item details
@@ -135,19 +167,58 @@ app.get('/api/items/:id', (req, res) => {
   res.json(item);
 });
 
-// user: update item
-app.put('/api/user/items/:id', (req, res) => {
+// user: update item (protected) — used for edits, marking found, and confirming claims
+app.put('/api/user/items/:id', userAuth, (req, res) => {
   const id = req.params.id;
   const db = readDB();
   const item = db.items.find(i => i.id === id);
   if (!item) return res.status(404).json({ error: 'Item not found' });
   const body = req.body || {};
-  if (body.name !== undefined) item.name = String(body.name);
-  if (body.description !== undefined) item.description = String(body.description);
-  if (body.location !== undefined) item.location = String(body.location);
+
+  // If the authenticated user is the creator, allow direct edits and confirmations
+  const isCreator = item.creatorId && (item.creatorId === req.user.userId);
+
+  if (body.name !== undefined && isCreator) item.name = String(body.name);
+  if (body.description !== undefined && isCreator) item.description = String(body.description);
+  if (body.location !== undefined && isCreator) item.location = String(body.location);
   if (body.dateFound !== undefined) item.dateFound = String(body.dateFound);
-  if (body.status !== undefined) item.status = body.status;
-  // save
+
+  // Handling marking found / claim flow
+  if (body.status !== undefined || body.action !== undefined) {
+    // If creator confirms a pending claim, allow confirmation via action: 'confirm'
+    if (body.action === 'confirm' && isCreator && item.pendingClaim) {
+      // finalize by deleting the item (simpler flow)
+      db.items = db.items.filter(i => i.id !== id);
+      writeDB(db);
+      return res.json({ deleted: true, id });
+    }
+
+    if (body.status !== undefined) {
+      // non-creator initiating a claim for desired status
+      if (!isCreator) {
+        item.pendingClaim = {
+          byId: req.user.userId,
+          byName: req.user.username,
+          byEmail: req.user.username,
+          desiredStatus: String(body.status),
+          at: Date.now()
+        };
+        // persist and return item (creator contact info included)
+        writeDB(db);
+        return res.json(item);
+      } else {
+        // creator can directly set status when editing
+        item.status = body.status;
+      }
+    }
+  }
+
+  // allow creator to set dropLocation/contact if provided
+  if (body.dropLocation !== undefined && isCreator) item.dropLocation = String(body.dropLocation);
+  if (body.shareContact !== undefined && isCreator) item.shareContact = !!body.shareContact;
+  if (body.contactName !== undefined && isCreator) item.contactName = String(body.contactName);
+  if (body.contactPhone !== undefined && isCreator) item.contactPhone = String(body.contactPhone);
+
   writeDB(db);
   res.json(item);
 });
