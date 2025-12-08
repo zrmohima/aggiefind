@@ -97,7 +97,28 @@ app.post('/api/user/login', async (req, res) => {
   const match = await bcrypt.compare(password, user.passwordHash);
   if (!match) return res.status(401).json({ error: 'Invalid credentials' });
   const token = jwt.sign({ userId: user.id, username: user.username }, JWT_SECRET, { expiresIn: JWT_EXP });
-  res.json({ token, username: user.username });
+  // return token and basic user info (name/email may be undefined for older entries)
+  res.json({ token, user: { id: user.id, username: user.username, name: user.name || null, email: user.email || null } });
+});
+
+// User registration
+app.post('/api/user/register', async (req, res) => {
+  const { username, password, name, email } = req.body;
+  if (!username || !password) return res.status(400).json({ error: 'Missing username/password' });
+  const db = readDB();
+  const exists = db.users.find(u => u.username === username);
+  if (exists) return res.status(409).json({ error: 'User already exists' });
+  try {
+    const passwordHash = await bcrypt.hash(password, 10);
+    const id = uuidv4();
+    const user = { id, username, passwordHash, name: name || null, email: email || null, createdAt: Date.now() };
+    db.users.push(user);
+    writeDB(db);
+    res.status(201).json({ id: user.id, username: user.username, name: user.name, email: user.email });
+  } catch (err) {
+    console.error('Error registering user', err);
+    res.status(500).json({ error: 'Could not register user' });
+  }
 });
 
 // user: list items

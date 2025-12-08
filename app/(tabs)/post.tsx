@@ -25,6 +25,7 @@ const NMSU_DROPLOCATIONS = [
 ];
 
 export default function PostScreen() {
+    const [pendingFoundItem, setPendingFoundItem] = useState<LostItem | null>(null);
     const [missingFields, setMissingFields] = useState<string[]>([]);
     const [postType, setPostType] = useState<"lost" | "found">("lost");
     const [name, setName] = useState('');
@@ -186,6 +187,7 @@ export default function PostScreen() {
 
         if (similar.length > 0) {
             setSimilarItems(similar);
+            setPendingFoundItem(newItem);
             setModalVisible(true);
         } else {
             postItemToApi(newItem);
@@ -337,8 +339,12 @@ export default function PostScreen() {
                             <TouchableOpacity
                                 style={styles.modalSubmitButton}
                                 onPress={() => {
+                                    // If there is a pending found item, submit it to the API
+                                    if (pendingFoundItem) {
+                                        postItemToApi(pendingFoundItem);
+                                        setPendingFoundItem(null);
+                                    }
                                     setModalVisible(false);
-                                    Alert.alert("Submission Logic", "Item will be submitted as 'Found' now.");
                                     resetForm();
                                 }}
                             >
