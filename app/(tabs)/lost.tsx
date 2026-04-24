@@ -79,7 +79,6 @@ export default function ClaimsScreen() {
             });
     };
 
-    // reload items whenever this screen gains focus so newly posted items appear
     useFocusEffect(
         React.useCallback(() => {
             loadItemsFromBackend();
@@ -94,7 +93,6 @@ export default function ClaimsScreen() {
     };
 
     const handleDelete = (item: LostItem): void => {
-        //check if the same user is deleting the post and status and post type match
         Alert.alert(
             "Confirm Deletion",
             `Are you sure you want to delete item ${item.name}?`,

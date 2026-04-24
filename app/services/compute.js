@@ -24,10 +24,6 @@ function distanceWeight(fromName, toName) {
     return 1 / (1 + dist / 100);
 }
 
-// Rebuild PROBABILITY_SCORES in place for this specific search
-// Based on student enrollment in the schedule window for this item
-// Each edge (from → to) probability = distanceWeight(from,to) × studentsIn(from)
-// normalized per row so all outgoing edges from a node sum to 1
 function rebuildProbabilityScores(trafficMap) {
     for (const from of Object.keys(GRAPH)) {
         const neighbors = Object.keys(GRAPH[from]);
@@ -100,7 +96,6 @@ export function runSearch(startLocation, lostDateStr, schedule, threshold = 0.02
     const trafficMap = buildTrafficMap(relevantRows);
     const start = GRAPH[startLocation] ? startLocation : Object.keys(GRAPH)[0];
 
-    // Rebuild PROBABILITY_SCORES in place for this item's time window
     rebuildProbabilityScores(trafficMap);
 
     const buildingProbs = {};

@@ -31,7 +31,6 @@ export const FACILITY_LABELS = {
     WaldenHall: "Walden Hall Lost & Found",
 };
 
-// Adjacency only — 1 means directly reachable on foot
 export const GRAPH = {
     ScienceHall: { WaldenHall: 1, BiologyAnnex: 1, AstronomyBuilding: 1, BransonLibrary: 1, FrencerFoodCourt: 1 },
     WaldenHall: { ScienceHall: 1, FosterHall: 1, BransonLibrary: 1 },
@@ -49,9 +48,6 @@ export const GRAPH = {
     HadleyHall: { YoungHall: 1, FosterHall: 1, BransonLibrary: 1 },
 };
 
-// Transition probabilities between adjacent buildings
-// Same shape as GRAPH — only edges that exist in GRAPH appear here
-// Updated by EMA on recovery: confirmed edge goes up, others go down
 export let PROBABILITY_SCORES = {
     ScienceHall: { WaldenHall: 0.25, BiologyAnnex: 0.20, AstronomyBuilding: 0.20, BransonLibrary: 0.20, FrencerFoodCourt: 0.15 },
     WaldenHall: { ScienceHall: 0.35, FosterHall: 0.35, BransonLibrary: 0.30 },
@@ -69,28 +65,23 @@ export let PROBABILITY_SCORES = {
     HadleyHall: { YoungHall: 0.35, FosterHall: 0.35, BransonLibrary: 0.30 },
 };
 
-// Distance matrix D[i][j] = walking distance in meters between location i and j
 export const DISTANCE_MATRIX = [
-    //   0     1     2     3     4     5     6     7     8     9    10    11    12    13
-    [0, 80, 120, 200, 280, 300, 450, 400, 550, 600, 350, 600, 700, 520],  // 0  ScienceHall
-    [80, 0, 200, 280, 200, 200, 380, 420, 570, 620, 400, 550, 700, 450],  // 1  WaldenHall
-    [120, 200, 0, 100, 250, 350, 480, 380, 530, 580, 350, 560, 680, 530],  // 2  BiologyAnnex
-    [200, 280, 100, 0, 250, 380, 480, 350, 500, 560, 300, 520, 640, 530],  // 3  AstronomyBuilding
-    [280, 200, 250, 250, 0, 150, 180, 200, 320, 380, 220, 350, 500, 320],  // 4  BransonLibrary
-    [300, 200, 350, 380, 150, 0, 250, 350, 450, 520, 370, 480, 620, 350],  // 5  FosterHall
-    [450, 380, 480, 480, 180, 250, 0, 320, 220, 380, 350, 420, 560, 200],  // 6  YoungHall
-    [400, 420, 380, 350, 200, 350, 320, 0, 200, 280, 120, 200, 380, 380],  // 7  PeteDomenici
-    [550, 570, 530, 500, 320, 450, 220, 200, 0, 220, 320, 380, 520, 380],  // 8  HardmanJacobs
-    [600, 620, 580, 560, 380, 520, 380, 280, 220, 0, 380, 280, 480, 480],  // 9  MiltonHall
-    [350, 400, 350, 300, 220, 370, 350, 120, 320, 380, 0, 200, 280, 450],  // 10 FrencerFoodCourt
-    [600, 550, 560, 520, 350, 480, 420, 200, 380, 280, 200, 0, 300, 500],  // 11 ZuhlLibrary
-    [700, 700, 680, 640, 500, 620, 560, 380, 520, 480, 280, 300, 0, 650],  // 12 AggieHealth
-    [520, 450, 530, 530, 320, 350, 200, 380, 380, 480, 450, 500, 650, 0],  // 13 HadleyHall
+    [0, 80, 120, 200, 280, 300, 450, 400, 550, 600, 350, 600, 700, 520],
+    [80, 0, 200, 280, 200, 200, 380, 420, 570, 620, 400, 550, 700, 450],
+    [120, 200, 0, 100, 250, 350, 480, 380, 530, 580, 350, 560, 680, 530],
+    [200, 280, 100, 0, 250, 380, 480, 350, 500, 560, 300, 520, 640, 530],
+    [280, 200, 250, 250, 0, 150, 180, 200, 320, 380, 220, 350, 500, 320],
+    [300, 200, 350, 380, 150, 0, 250, 350, 450, 520, 370, 480, 620, 350],
+    [450, 380, 480, 480, 180, 250, 0, 320, 220, 380, 350, 420, 560, 200],
+    [400, 420, 380, 350, 200, 350, 320, 0, 200, 280, 120, 200, 380, 380],
+    [550, 570, 530, 500, 320, 450, 220, 200, 0, 220, 320, 380, 520, 380],
+    [600, 620, 580, 560, 380, 520, 380, 280, 220, 0, 380, 280, 480, 480],
+    [350, 400, 350, 300, 220, 370, 350, 120, 320, 380, 0, 200, 280, 450],
+    [600, 550, 560, 520, 350, 480, 420, 200, 380, 280, 200, 0, 300, 500],
+    [700, 700, 680, 640, 500, 620, 560, 380, 520, 480, 280, 300, 0, 650],
+    [520, 450, 530, 530, 320, 350, 200, 380, 380, 480, 450, 500, 650, 0],
 ];
 
-// Heuristic score per building — single value representing how likely
-// a lost item ends up here, computed from PROBABILITY_SCORES + DISTANCE_MATRIX
-// Updated by search.js after each computation, persists across searches
 export let HEURISTIC_SCORES = {
     ScienceHall: 0.60,
     WaldenHall: 0.75,
@@ -108,9 +99,6 @@ export let HEURISTIC_SCORES = {
     HadleyHall: 0.75,
 };
 
-// EMA update for PROBABILITY_SCORES on recovery
-// confirmedPath = array of building names representing the recovery path e.g. ["ScienceHall", "BransonLibrary", "ZuhlLibrary"]
-// edges along the confirmed path get reward=1, all other edges get reward=0
 export function updateProbabilityScores(confirmedPath, alpha = 0.1) {
     const confirmedEdges = new Set();
     for (let i = 0; i < confirmedPath.length - 1; i++) {
@@ -131,8 +119,6 @@ export function updateProbabilityScores(confirmedPath, alpha = 0.1) {
     }
 }
 
-// EMA update for HEURISTIC_SCORES on recovery
-// confirmed building goes up toward 1, all others nudge down
 export function updateHeuristicScores(confirmedBuilding, alpha = 0.1, penaltyRate = 0.05) {
     for (const building of Object.keys(HEURISTIC_SCORES)) {
         if (building === confirmedBuilding) {
