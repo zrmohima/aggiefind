@@ -136,7 +136,7 @@ export default function HomeScreen() {
                                 {item.description ? <Text style={{ color: INV_TEXT }}>{item.description}</Text> : null}
                                 {item.creatorName || item.creatorEmail ? <Text style={{ color: INV_TEXT }}>Posted by: {item.creatorName || item.creatorEmail}</Text> : null}
                                 {item.location ? <Text style={{ color: INV_TEXT }}>Found at: {item.location}</Text> : null}
-                                {item.dateFound ? <Text style={{ color: INV_TEXT }}>Found on: {item.dateFound}</Text> : null}
+                                {item.dateFound ? <Text style={{ color: INV_TEXT }}>Found on: {new Date(item.dateFound).toLocaleString()}</Text> : null}
                                 {item.pendingClaim ? (
                                     <View style={{ marginTop: 6, padding: 8, backgroundColor: '#FEE2E2', borderRadius: 4 }}>
                                         <Text style={{ color: '#DC2626', fontWeight: '600' }}>Pending Claim</Text>

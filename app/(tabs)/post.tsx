@@ -18,10 +18,27 @@ const NMSU_USER_EMAILS = [
 ];
 
 const NMSU_DROPLOCATIONS = [
-    { label: "Zuhl Library", value: "Zuhl Library" },
-    { label: "Corbett Center", value: "Corbett Center" },
-    { label: "Student Union Building", value: "Student Union Building" },
-    { label: "Frenger Mall", value: "Frenger Mall" }
+    { label: "Hadley Hall Lost & Found", value: "HadleyHall" },
+    { label: "Zuhl Library Front Desk", value: "ZuhlLibrary" },
+    { label: "Walden Hall Lost & Found", value: "WaldenHall" },
+];
+
+const NMSU_LOCATIONS = [
+    { label: "Select a location...", value: "" },
+    { label: "Science Hall", value: "ScienceHall" },
+    { label: "Walden Hall", value: "WaldenHall" },
+    { label: "Biology Annex", value: "BiologyAnnex" },
+    { label: "Astronomy Building", value: "AstronomyBuilding" },
+    { label: "Branson Library", value: "BransonLibrary" },
+    { label: "Foster Hall", value: "FosterHall" },
+    { label: "Young Hall", value: "YoungHall" },
+    { label: "Pete V. Domenici Hall", value: "PeteDomenici" },
+    { label: "Hardman & Jacobs", value: "HardmanJacobs" },
+    { label: "Milton Hall", value: "MiltonHall" },
+    { label: "Frenger Food Court", value: "FrencerFoodCourt" },
+    { label: "Zuhl Library", value: "ZuhlLibrary" },
+    { label: "Aggie Health & Wellness", value: "AggieHealth" },
+    { label: "Hadley Hall", value: "HadleyHall" },
 ];
 
 export default function PostScreen() {
@@ -101,8 +118,18 @@ export default function PostScreen() {
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             quality: 0.8,
+            base64: true,
         });
-        if (!result.canceled) setImage(result.assets[0].uri);
+
+        if (!result.canceled) {
+            const asset = result.assets[0];
+
+            if (asset.base64) {
+                setImage(`data:image/jpeg;base64,${asset.base64}`);
+            } else {
+                setImage(asset.uri);
+            }
+        }
     };
 
     const showDateTimePicker = (mode: string) => {
@@ -221,7 +248,7 @@ export default function PostScreen() {
         const requiredFields: { [key: string]: string | string[] } = {
             name: name.trim(),
             desc: desc.trim(),
-            loc: loc.trim(),
+            loc: loc,
         };
         if (!visibility && selectedNMSUUsers.length === 0) {
             requiredFields.users = selectedNMSUUsers;
@@ -369,145 +396,228 @@ export default function PostScreen() {
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: BG }}>
             <Header title="Post" />
+            <ScrollView contentContainerStyle={styles.scrollContent}>
 
-            <ScrollView contentContainerStyle={{ padding: 16 }}>
-                <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 12 }}>Post an Item</Text>
+                <Text style={styles.pageTitle}>Post an Item</Text>
 
-                <View style={{ marginBottom: 16 }}>
-                    <Text style={{ marginBottom: 6 }}>Post Type</Text>
-                    <View style={{ flexDirection: "row" }}>
-                        <TouchableOpacity onPress={() => setPostType("lost")} style={{ padding: 8, marginRight: 8, backgroundColor: postType === "lost" ? "#882345" : "#f0f0f0", borderRadius: 5 }}>
-                            <Text style={{ color: postType === "lost" ? "#fff" : "#111827" }}>Lost</Text>
+                {/* Post Type Toggle */}
+                <View style={styles.section}>
+                    <Text style={styles.label}>Post Type</Text>
+                    <View style={styles.toggleRow}>
+                        <TouchableOpacity
+                            onPress={() => setPostType("lost")}
+                            style={[styles.toggleBtn, postType === "lost" && styles.toggleBtnActive]}
+                        >
+                            <Text style={[styles.toggleText, postType === "lost" && styles.toggleTextActive]}>Lost</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setPostType("found")} style={{ padding: 8, backgroundColor: postType === "found" ? "#882345" : "#f0f0f0", borderRadius: 5 }}>
-                            <Text style={{ color: postType === "found" ? "#fff" : "#111827" }}>Found</Text>
+                        <TouchableOpacity
+                            onPress={() => setPostType("found")}
+                            style={[styles.toggleBtn, postType === "found" && styles.toggleBtnActive]}
+                        >
+                            <Text style={[styles.toggleText, postType === "found" && styles.toggleTextActive]}>Found</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
 
-                <TextInput placeholder="Title" placeholderTextColor="#9CA3AF" value={name} onChangeText={(text) => { setName(text); text != "" && setMissingFields(missingFields.filter(field => field != "name")); }} style={[styles.textInput, { color: TEXT }, isMissing('name') && styles.inputError]} />
+                {/* Title */}
+                <View style={styles.section}>
+                    <Text style={styles.label}>Title</Text>
+                    <TextInput
+                        placeholder="e.g., Black backpack with NMSU sticker"
+                        placeholderTextColor="#9CA3AF"
+                        value={name}
+                        onChangeText={(text) => { setName(text); text !== "" && setMissingFields(missingFields.filter(f => f !== "name")); }}
+                        style={[styles.textInput, { color: TEXT }, isMissing('name') && styles.inputError]}
+                    />
+                </View>
 
-                <TouchableOpacity onPress={pickImage} style={{ height: 180, borderWidth: 2, borderStyle: "dashed", borderRadius: 5, justifyContent: "center", alignItems: "center", marginBottom: 12 }}>
-                    {image ? <Image source={{ uri: image }} style={{ width: "100%", height: "100%", borderRadius: 5 }} /> : <Text style={{ color: "#9CA3AF" }}>Tap to add image</Text>}
-                </TouchableOpacity>
+                {/* Image */}
+                <View style={styles.section}>
+                    <Text style={styles.label}>Photo</Text>
 
-                <TextInput placeholder="Description" placeholderTextColor="#9CA3AF" value={desc} onChangeText={(text) => { setDesc(text); text != "" && setMissingFields(missingFields.filter(field => field != "desc")); }} multiline style={[styles.textInput, { color: TEXT, height: 100, textAlignVertical: 'top' }, isMissing('desc') && styles.inputError]} />
+                    <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
+                        {image
+                            ? <Image source={{ uri: image }} style={styles.imagePreview} />
+                            : <View style={styles.imagePlaceholder}>
+                                <Text style={styles.imagePlaceholderIcon}>📷</Text>
+                                <Text style={styles.imagePlaceholderText}>Tap to add photo</Text>
+                            </View>
+                        }
+                    </TouchableOpacity>
+                </View>
 
-                <TextInput placeholder="Location" placeholderTextColor="#9CA3AF" value={loc} onChangeText={(text) => { setLoc(text); text != "" && setMissingFields(missingFields.filter(field => field != "loc")); }} multiline style={[styles.textInput, { color: TEXT }, isMissing('loc') && styles.inputError]} />
+                {/* Description */}
+                <View style={styles.section}>
+                    <Text style={styles.label}>Description</Text>
+                    <TextInput
+                        placeholder="Describe the item in detail..."
+                        placeholderTextColor="#9CA3AF"
+                        value={desc}
+                        onChangeText={(text) => { setDesc(text); text !== "" && setMissingFields(missingFields.filter(f => f !== "desc")); }}
+                        multiline
+                        style={[styles.textInput, { color: TEXT, height: 100, textAlignVertical: 'top' }, isMissing('desc') && styles.inputError]}
+                    />
+                </View>
 
-                <View style={styles.radioGroup}>
-                    <Text style={styles.radioLabel}>Do you wish your item to be dropped off at a facility?</Text>
-                    <View style={styles.radioOptions}>
+                {/* Location Picker */}
+                <View style={styles.section}>
+                    <Text style={styles.label}>Location</Text>
+                    <View style={[styles.pickerWrapper, isMissing('loc') && styles.inputError]}>
+                        <Picker
+                            style={{ backgroundColor: BG, color: TEXT }}
+                            selectedValue={loc}
+                            onValueChange={(v) => {
+                                setLoc(v.toString());
+                                v !== "" && setMissingFields(missingFields.filter(f => f !== 'loc'));
+                            }}
+                        >
+                            {NMSU_LOCATIONS.map((item) => (
+                                <Picker.Item key={item.value} label={item.label} value={item.value} />
+                            ))}
+                        </Picker>
+                    </View>
+                </View>
 
+                {/* Drop off */}
+                <View style={styles.section}>
+                    <Text style={styles.label}>Drop off at a facility?</Text>
+                    <View style={styles.toggleRow}>
                         <TouchableOpacity
-                            style={styles.radioButton}
+                            style={[styles.toggleBtn, wishToDrop && styles.toggleBtnActive]}
                             onPress={() => setWishToDrop(true)}
                         >
-                            <View style={styles.radioCircle}>
-                                {wishToDrop && <View style={styles.selectedCircle} />}
-                            </View>
-                            <Text style={styles.radioText}>Yes</Text>
+                            <Text style={[styles.toggleText, wishToDrop && styles.toggleTextActive]}>Yes</Text>
                         </TouchableOpacity>
-
                         <TouchableOpacity
-                            style={styles.radioButton}
+                            style={[styles.toggleBtn, !wishToDrop && styles.toggleBtnActive]}
                             onPress={() => setWishToDrop(false)}
                         >
-                            <View style={styles.radioCircle}>
-                                {!wishToDrop && <View style={styles.selectedCircle} />}
-                            </View>
-                            <Text style={styles.radioText}>No</Text>
+                            <Text style={[styles.toggleText, !wishToDrop && styles.toggleTextActive]}>No</Text>
                         </TouchableOpacity>
                     </View>
-                </View>
 
-                {wishToDrop && (
-                    <View style={{ marginBottom: 5 }}>
-                        <Text style={{ marginBottom: 6, color: TEXT }}>Select Drop Location</Text>
-                        <View style={{ borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 5, overflow: "hidden", marginBottom: 12 }}>
-                            <Picker style={{ backgroundColor: BG, color: TEXT }} selectedValue={dropLoc} onValueChange={(v) => setDropLoc(v.toString())}>
+                    {wishToDrop && (
+                        <View style={[styles.pickerWrapper, { marginTop: 10 }]}>
+                            <Picker
+                                style={{ backgroundColor: BG, color: TEXT }}
+                                selectedValue={dropLoc}
+                                onValueChange={(v) => setDropLoc(v.toString())}
+                            >
                                 {NMSU_DROPLOCATIONS.map((item) => (
                                     <Picker.Item key={item.value} label={item.label} value={item.value} />
                                 ))}
                             </Picker>
                         </View>
-                    </View>)}
+                    )}
+                </View>
 
-                {/* Share contact is now independent of drop-off choice */}
-                <View style={{ marginBottom: 12 }}>
-                    <Text style={{ marginBottom: 6, color: TEXT }}>Do you want to share your information?</Text>
-                    <View style={{ flexDirection: 'row' }}>
-                        <TouchableOpacity onPress={() => setShareInfo(true)} style={{ padding: 8, marginRight: 8, backgroundColor: shareInfo ? "#882345" : "#f0f0f0", borderRadius: 5 }}>
-                            <Text style={{ color: shareInfo ? "#fff" : "#111827" }}>Yes</Text>
+                {/* Share contact */}
+                <View style={styles.section}>
+                    <Text style={styles.label}>Share your contact info?</Text>
+                    <View style={styles.toggleRow}>
+                        <TouchableOpacity
+                            onPress={() => setShareInfo(true)}
+                            style={[styles.toggleBtn, shareInfo && styles.toggleBtnActive]}
+                        >
+                            <Text style={[styles.toggleText, shareInfo && styles.toggleTextActive]}>Yes</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setShareInfo(false)} style={{ padding: 8, backgroundColor: shareInfo ? "#f0f0f0" : "#882345", borderRadius: 5 }}>
-                            <Text style={{ color: shareInfo ? "#111827" : "#fff" }}>No</Text>
+                        <TouchableOpacity
+                            onPress={() => setShareInfo(false)}
+                            style={[styles.toggleBtn, !shareInfo && styles.toggleBtnActive]}
+                        >
+                            <Text style={[styles.toggleText, !shareInfo && styles.toggleTextActive]}>No</Text>
                         </TouchableOpacity>
                     </View>
 
                     {shareInfo && (
                         <View style={{ marginTop: 12 }}>
-                            <Text style={{ marginBottom: 6, color: TEXT }}>Contact name</Text>
+                            <Text style={styles.subLabel}>Contact name</Text>
                             <TextInput
                                 placeholder="Your name"
                                 placeholderTextColor="#9CA3AF"
                                 value={contactName}
-                                onChangeText={(t) => { setContactName(t); t != "" && setMissingFields(missingFields.filter(f => f !== 'contactName')); }}
+                                onChangeText={(t) => { setContactName(t); t !== "" && setMissingFields(missingFields.filter(f => f !== 'contactName')); }}
                                 style={[styles.textInput, { color: TEXT }, isMissing('contactName') && styles.inputError]}
                             />
-
-                            <Text style={{ marginBottom: 6, marginTop: 8, color: TEXT }}>Phone number</Text>
+                            <Text style={styles.subLabel}>Phone number</Text>
                             <TextInput
                                 placeholder="e.g., 575-123-4567"
                                 placeholderTextColor="#9CA3AF"
                                 value={contactPhone}
-                                onChangeText={(t) => { setContactPhone(t); t != "" && setMissingFields(missingFields.filter(f => f !== 'contactPhone')); }}
+                                onChangeText={(t) => { setContactPhone(t); t !== "" && setMissingFields(missingFields.filter(f => f !== 'contactPhone')); }}
                                 style={[styles.textInput, { color: TEXT }, isMissing('contactPhone') && styles.inputError]}
                                 keyboardType="phone-pad"
                             />
                         </View>
                     )}
                 </View>
-                <View style={{ flexDirection: "row", gap: 10, marginBottom: 12 }}>
-                    <TouchableOpacity onPress={() => showDateTimePicker("date")} style={{ flex: 1, borderWidth: 1, borderRadius: 5, padding: 12, alignItems: "center" }}>
-                        <Text style={{ color: TEXT }}>{new Date(dateTime).toLocaleDateString()}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => showDateTimePicker("time")} style={{ flex: 1, borderWidth: 1, borderRadius: 5, padding: 12, alignItems: "center" }}>
-                        <Text style={{ color: TEXT }}>{new Date(dateTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
-                    </TouchableOpacity>
+
+                {/* Date & Time */}
+                <View style={styles.section}>
+                    <Text style={styles.label}>Date & Time</Text>
+                    <View style={styles.dateRow}>
+                        <TouchableOpacity
+                            onPress={() => showDateTimePicker("date")}
+                            style={styles.dateBtn}
+                        >
+                            <Text style={styles.dateBtnIcon}>📅</Text>
+                            <Text style={[styles.dateBtnText, { color: TEXT }]}>
+                                {new Date(dateTime).toLocaleDateString()}
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => showDateTimePicker("time")}
+                            style={styles.dateBtn}
+                        >
+                            <Text style={styles.dateBtnIcon}>🕐</Text>
+                            <Text style={[styles.dateBtnText, { color: TEXT }]}>
+                                {new Date(dateTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                    {showPicker && (
+                        <DateTimePicker
+                            value={dateTime}
+                            mode={pickerMode as "date" | "time"}
+                            display={Platform.OS === "ios" ? "inline" : "default"}
+                            onChange={onChange}
+                        />
+                    )}
                 </View>
 
-                {showPicker && <DateTimePicker value={dateTime} mode={pickerMode as "date" | "time"} display={Platform.OS === "ios" ? "inline" : "default"} onChange={onChange} />}
-
-                <View style={{ marginBottom: 16 }}>
-                    <Text style={{ marginBottom: 6 }}>Visibility</Text>
-                    <View style={{ flexDirection: "row" }}>
-                        <TouchableOpacity onPress={() => setVisibility(true)} style={{ padding: 8, marginRight: 8, backgroundColor: visibility ? "#882345" : "#f0f0f0", borderRadius: 5 }}>
-                            <Text style={{ color: visibility ? "#fff" : "#111827" }}>Public</Text>
+                {/* Visibility */}
+                <View style={styles.section}>
+                    <Text style={styles.label}>Visibility</Text>
+                    <View style={styles.toggleRow}>
+                        <TouchableOpacity
+                            onPress={() => setVisibility(true)}
+                            style={[styles.toggleBtn, visibility && styles.toggleBtnActive]}
+                        >
+                            <Text style={[styles.toggleText, visibility && styles.toggleTextActive]}>Public</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setVisibility(false)} style={{ padding: 8, backgroundColor: visibility ? "#f0f0f0" : "#882345", borderRadius: 5 }}>
-                            <Text style={{ color: visibility ? "#111827" : "#fff" }}>NMSU Only</Text>
+                        <TouchableOpacity
+                            onPress={() => setVisibility(false)}
+                            style={[styles.toggleBtn, !visibility && styles.toggleBtnActive]}
+                        >
+                            <Text style={[styles.toggleText, !visibility && styles.toggleTextActive]}>NMSU Only</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
 
+                {/* NMSU Users */}
                 {!visibility && (
-                    <View style={[styles.nmsuUserContainer, isMissing('users') && styles.inputError]}>
-                        <Text style={{ marginBottom: 6, fontWeight: '600', color: TEXT }}>Select Users (Emails)</Text>
-
-                        {/* Wrapper for dropdown positioning */}
+                    <View style={[styles.section, styles.nmsuUserContainer, isMissing('users') && styles.inputError]}>
+                        <Text style={styles.label}>Select Users (Emails)</Text>
                         <View>
                             <TextInput
                                 placeholder="Search and select user email..."
                                 placeholderTextColor="#9CA3AF"
                                 value={nmsuUserInput}
                                 onChangeText={handleNMSUUserInput}
-                                style={{ borderWidth: 1, borderRadius: 5, padding: 10, marginBottom: 8, backgroundColor: BG, color: TEXT }}
+                                style={[styles.textInput, { color: TEXT }]}
                                 keyboardType="email-address"
                                 autoCapitalize="none"
                             />
-
-                            {/* Dropdown for Filtered Users (Fixed Height and Scrollable) */}
                             {filteredNMSUUsers.length > 0 && (
                                 <View style={styles.dropdownContainer}>
                                     <ScrollView style={styles.dropdown} nestedScrollEnabled={true}>
@@ -524,16 +634,15 @@ export default function PostScreen() {
                                 </View>
                             )}
                         </View>
-
                         {selectedNMSUUsers.length > 0 && (
                             <View>
-                                <Text style={{ marginTop: 8, fontWeight: '500', color: TEXT }}>Selected Emails:</Text>
+                                <Text style={styles.subLabel}>Selected Emails:</Text>
                                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 }}>
                                     {selectedNMSUUsers.map((email) => (
                                         <View key={email} style={styles.selectedChip}>
                                             <Text style={{ color: '#fff', fontSize: 12, marginRight: 4 }}>{email}</Text>
                                             <TouchableOpacity onPress={() => handleRemoveNMSUUser(email)}>
-                                                <Text style={{ color: 'red', fontSize: 14 }}>x</Text>
+                                                <Text style={{ color: '#fca5a5', fontSize: 14, fontWeight: '700' }}>×</Text>
                                             </TouchableOpacity>
                                         </View>
                                     ))}
@@ -543,62 +652,190 @@ export default function PostScreen() {
                     </View>
                 )}
 
-                <TouchableOpacity onPress={handleSubmit} style={{ backgroundColor: "#882345", padding: 12, borderRadius: 5 }}>
-                    <Text style={{ color: "#fff", textAlign: "center", fontWeight: "600" }}>
+                {/* Submit */}
+                <TouchableOpacity onPress={handleSubmit} style={styles.submitBtn}>
+                    <Text style={styles.submitText}>
                         {isEditMode
                             ? "Save Changes"
-                            : (postType === "found" ? "Submit Found Item" : "Submit Lost Item")
+                            : postType === "found" ? "Submit Found Item" : "Submit Lost Item"
                         }
                     </Text>
                 </TouchableOpacity>
+
             </ScrollView>
-        </SafeAreaView >
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    inputError: {
-        borderColor: '#FF0000',
-        borderWidth: 2,
+    scrollContent: {
+        padding: 16,
+        paddingBottom: 40,
     },
-    nmsuUserContainer: {
-        marginBottom: 16,
-        padding: 10,
-        borderWidth: 1,
-        borderRadius: 5,
+    pageTitle: {
+        fontSize: 22,
+        fontWeight: "800",
+        marginBottom: 20,
+        color: "#111827",
+    },
+    section: {
+        marginBottom: 18,
+    },
+    label: {
+        fontSize: 13,
+        fontWeight: "600",
+        color: "#6B7280",
+        marginBottom: 8,
+        textTransform: "uppercase",
+        letterSpacing: 0.5,
+    },
+    subLabel: {
+        fontSize: 13,
+        fontWeight: "500",
+        color: "#6B7280",
+        marginBottom: 6,
+        marginTop: 8,
     },
     textInput: {
         borderWidth: 1,
-        borderRadius: 5,
-        padding: 10,
-        marginBottom: 12,
+        borderColor: "#E5E7EB",
+        borderRadius: 10,
+        padding: 12,
+        fontSize: 15,
+        backgroundColor: "#FAFAFA",
+    },
+    inputError: {
+        borderColor: '#EF4444',
+        borderWidth: 1.5,
+    },
+    pickerWrapper: {
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        borderRadius: 10,
+        overflow: "hidden",
+        backgroundColor: "#FAFAFA",
+    },
+    toggleRow: {
+        flexDirection: "row",
+        gap: 8,
+    },
+    toggleBtn: {
+        paddingVertical: 8,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        backgroundColor: "#F9FAFB",
+    },
+    toggleBtnActive: {
+        backgroundColor: "#882345",
+        borderColor: "#882345",
+    },
+    toggleText: {
+        fontSize: 14,
+        fontWeight: "600",
+        color: "#6B7280",
+    },
+    toggleTextActive: {
+        color: "#fff",
+    },
+    imagePicker: {
+        height: 180,
+        borderWidth: 1.5,
+        borderStyle: "dashed",
+        borderColor: "#D1D5DB",
+        borderRadius: 12,
+        overflow: "hidden",
+        backgroundColor: "#F9FAFB",
+    },
+    imagePreview: {
+        width: "100%",
+        height: "100%",
+    },
+    imagePlaceholder: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 8,
+    },
+    imagePlaceholderIcon: {
+        fontSize: 32,
+    },
+    imagePlaceholderText: {
+        color: "#9CA3AF",
+        fontSize: 14,
+    },
+    dateRow: {
+        flexDirection: "row",
+        gap: 10,
+    },
+    dateBtn: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        borderRadius: 10,
+        padding: 12,
+        backgroundColor: "#F9FAFB",
+    },
+    dateBtnIcon: {
+        fontSize: 16,
+    },
+    dateBtnText: {
+        fontSize: 14,
+        fontWeight: "500",
+    },
+    submitBtn: {
+        backgroundColor: "#882345",
+        padding: 15,
+        borderRadius: 12,
+        marginTop: 8,
+        shadowColor: "#882345",
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 4,
+    },
+    submitText: {
+        color: "#fff",
+        textAlign: "center",
+        fontWeight: "700",
+        fontSize: 16,
+    },
+    nmsuUserContainer: {
+        padding: 12,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        borderRadius: 10,
+        backgroundColor: "#FAFAFA",
     },
     dropdownContainer: {
-        zIndex: 10,
-        borderRadius: 5,
+        borderRadius: 8,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: '#ccc',
+        borderColor: '#E5E7EB',
+        backgroundColor: "#fff",
     },
-
     dropdown: {
-        maxHeight: 150
+        maxHeight: 150,
     },
     dropdownItem: {
         padding: 10,
         borderBottomWidth: 1,
-        borderBottomColor: '#eee'
+        borderBottomColor: '#F3F4F6',
     },
-
     selectedChip: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#882345',
-        borderRadius: 5,
+        borderRadius: 20,
         paddingVertical: 4,
-        paddingHorizontal: 8,
+        paddingHorizontal: 10,
         marginRight: 6,
-        marginBottom: 6
+        marginBottom: 6,
     },
     centeredView: {
         flex: 1,
@@ -613,10 +850,7 @@ const styles = StyleSheet.create({
         height: '80%',
         width: '90%',
         shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2
-        },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 4,
         elevation: 5,
@@ -626,7 +860,7 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
+        borderBottomColor: '#E5E7EB',
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -654,14 +888,13 @@ const styles = StyleSheet.create({
     },
     searchBarContainer: {
         padding: 15,
-
         borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
+        borderBottomColor: '#E5E7EB',
     },
     searchBar: {
         borderWidth: 1,
         borderColor: "#E5E7EB",
-        borderRadius: 5,
+        borderRadius: 8,
         padding: 10,
         backgroundColor: BG,
         color: TEXT,
@@ -669,7 +902,7 @@ const styles = StyleSheet.create({
     listItem: {
         padding: 15,
         borderBottomWidth: 1,
-        borderBottomColor: '#eee',
+        borderBottomColor: '#F3F4F6',
     },
     listItemTitle: {
         fontWeight: 'bold',
@@ -683,11 +916,9 @@ const styles = StyleSheet.create({
         padding: 15,
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
-
         borderTopWidth: 1,
-        borderTopColor: '#ccc',
+        borderTopColor: '#E5E7EB',
     },
-
     modalSubmitButton: {
         backgroundColor: "#882345",
         padding: 12,
@@ -696,7 +927,7 @@ const styles = StyleSheet.create({
     textStyle: {
         color: "white",
         fontWeight: "bold",
-        textAlign: "center"
+        textAlign: "center",
     },
     radioGroup: {
         flexDirection: 'column',
@@ -748,5 +979,5 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: TEXT,
         marginBottom: 5,
-    }
+    },
 });
