@@ -5,7 +5,6 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
     ActivityIndicator,
-    Alert,
     FlatList,
     Image,
     Linking,
@@ -20,7 +19,6 @@ import Button from "../components/Button";
 import Header from "../components/Header";
 import { ACCENT_ADD, ACCENT_ADD_P, BG, BORDER, INV_TEXT, SUB } from "../constants/color";
 import { runSearch } from "../services/compute";
-import { ensureScheduleForRange } from "../services/scheduler";
 import { LostItem } from "../types/type";
 
 export default function ClaimsScreen() {
@@ -28,23 +26,20 @@ export default function ClaimsScreen() {
     const [items, setItems] = useState<LostItem[]>([]);
     const [selected, setSelected] = useState<LostItem | null>(null);
     const [searchState, setSearchState] = useState<Record<string, any>>({});
-    const [schedule, setSchedule] = useState<any[]>([]);
 
     const handleAIAssist = useCallback((item: LostItem) => {
         setSearchState(prev => ({
             ...prev,
             [item.id]: { loading: true, results: null },
         }));
-        setTimeout(() => {
-            const updated = ensureScheduleForRange(item.dateFound, schedule);
-            setSchedule(updated);
-            const output = runSearch(item.location, item.dateFound, updated);
+        setTimeout(async () => {
+            const output = await runSearch(item.location, item.dateFound);
             setSearchState(prev => ({
                 ...prev,
                 [item.id]: { loading: false, results: output },
             }));
         }, 400);
-    }, [schedule]);
+    }, []);
 
     function openMapsToBuilding(label: string) {
         const encoded = encodeURIComponent(`${label}, NMSU, Las Cruces, NM`);
@@ -79,6 +74,7 @@ export default function ClaimsScreen() {
             });
     };
 
+    // reload items whenever this screen gains focus so newly posted items appear
     useFocusEffect(
         React.useCallback(() => {
             loadItemsFromBackend();
@@ -90,23 +86,6 @@ export default function ClaimsScreen() {
             pathname: '/post',
             params: { id: item.id }
         });
-    };
-
-    const handleDelete = (item: LostItem): void => {
-        Alert.alert(
-            "Confirm Deletion",
-            `Are you sure you want to delete item ${item.name}?`,
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Delete",
-                    style: "destructive",
-                    onPress: () => {
-                        console.log(`Deleting item with ID: ${item.id}`);
-                    }
-                },
-            ]
-        );
     };
 
     const renderSearchResults = (item: LostItem) => {
@@ -204,7 +183,7 @@ export default function ClaimsScreen() {
 
                     <View style={styles.cardActions}>
                         <View style={styles.cardActionsLeft}>
-                            {item.status == item.postType && (
+                            {item.status !== 'found' && (
                                 <Button
                                     style={styles.editBtn}
                                     kind="ghost"
@@ -223,34 +202,6 @@ export default function ClaimsScreen() {
                             </TouchableOpacity>
                         )}
                     </View>
-
-                    {item.pendingClaim ? (
-                        <Button
-                            title="Confirm Return"
-                            onPress={() => {
-                                const headers: any = { 'Content-Type': 'application/json' };
-                                try {
-                                    if (typeof window !== 'undefined' && window.sessionStorage) {
-                                        const t = window.sessionStorage.getItem('aggiefind_token');
-                                        if (t) headers['Authorization'] = `Bearer ${t}`;
-                                    }
-                                } catch (e) { }
-                                fetch(`http://localhost:4000/api/user/items/${item.id}`, {
-                                    method: 'PUT', headers, body: JSON.stringify({ action: 'confirm' })
-                                })
-                                    .then(r => r.json())
-                                    .then(data => {
-                                        if (data && data.deleted) {
-                                            Alert.alert('Confirmed', 'Item resolved and removed from the list.');
-                                        } else {
-                                            Alert.alert('Confirmed', 'Item status updated.');
-                                        }
-                                        loadItemsFromBackend();
-                                    })
-                                    .catch(err => console.log('Error confirming claim:', err));
-                            }}
-                        />
-                    ) : null}
                 </View>
             </TouchableOpacity>
 
@@ -380,12 +331,6 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: "600",
     },
-    editBtn: {
-        marginTop: 0,
-        marginBottom: 0,
-        padding: 0,
-        backgroundColor: INV_TEXT,
-    },
     emptyState: {
         flex: 1,
         alignItems: "center",
@@ -454,11 +399,17 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        gap: 10,
         marginTop: 10,
+        gap: 10,
     },
     cardActionsLeft: {
         flex: 1,
+    },
+    editBtn: {
+        marginTop: 0,
+        marginBottom: 0,
+        padding: 2,
+        backgroundColor: INV_TEXT,
     },
     aiBtn: {
         flexDirection: "row",
@@ -466,7 +417,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#882345",
         borderRadius: 8,
         paddingVertical: 10,
-        paddingHorizontal: 15,
+        paddingHorizontal: 12,
         gap: 10,
     },
     aiBtnIcon: {

@@ -5,9 +5,10 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
-
+const dbRoute = require('./db');
 const DB_PATH = path.join(__dirname, 'db.json');
 
+const ALLOWED_FIELDS = ['heuristicScores', 'probabilityScores', 'schedule'];
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret_for_prod';
 const JWT_EXP = '8h';
 
@@ -24,7 +25,7 @@ function writeDB(obj) {
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // to handle larger payloads for schedule data
 
 // Serve root with minimal info
 app.get('/', (req, res) => {
@@ -232,6 +233,55 @@ app.delete('/api/user/items/:id', userAuth, (req, res) => {
   if (db.items.length === before) return res.status(404).json({ error: 'Item not found' });
   writeDB(db);
   res.json({ success: true });
+});
+
+// GET /api/ai/:field
+app.get('/api/ai/:field', (req, res) => {
+  const { field } = req.params;
+  const db = readDB();
+  if (db[field] === undefined) {
+    return res.status(400).json({ error: 'Unknown field' });
+  }
+  res.json(db[field] ?? null);
+});
+
+app.put('/api/ai/:field', (req, res) => {
+  const { field } = req.params;
+  if (!ALLOWED_FIELDS.includes(field) || field === 'schedule') {
+    return res.status(400).json({ error: 'Use /api/ai/schedule/append for schedule' });
+  }
+  const db = readDB();
+  db[field] = req.body;
+  writeDB(db);
+  res.json({ ok: true });
+});
+
+app.post('/api/ai/schedule/append', (req, res) => {
+  const { rows } = req.body;
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return res.json({ ok: true, added: 0 });
+  }
+  const db = readDB();
+  const existing = db.schedule ?? [];
+  const existingDates = new Set(existing.map(r => r.date));
+  const newRows = rows.filter(r => !existingDates.has(r.date));
+  if (newRows.length > 0) {
+    db.schedule = [...existing, ...newRows];
+    writeDB(db);
+  }
+  res.json({ ok: true, added: newRows.length, skipped: rows.length - newRows.length });
+});
+
+// PUT /api/ai/:field
+app.put('/api/ai/:field', (req, res) => {
+  const { field } = req.params;
+  const db = readDB();
+  if (!ALLOWED_FIELDS.includes(field)) {
+    return res.status(400).json({ error: 'Unknown field' });
+  }
+  db[field] = req.body;
+  writeDB(db);
+  res.json({ ok: true });
 });
 
 const PORT = process.env.PORT || 4000;
