@@ -54,15 +54,6 @@ function buildTrafficMap(scheduleRows) {
     return normalized;
 }
 
-function computeHeuristic(building, heuristicScores, distanceMatrix, locationNames, startLocation, pathProb, scheduleTraffic) {
-    const learned = heuristicScores[building] ?? 0.3;
-    const startId = locationNames[startLocation];
-    const buildId = locationNames[building];
-    const dist = startId !== undefined && buildId !== undefined ? distanceMatrix[startId][buildId] : 500;
-    const distW = 1 / (1 + dist / 100);
-    return 0.35 * learned + 0.30 * pathProb + 0.20 * distW + 0.15 * scheduleTraffic;
-}
-
 export async function runSearch(startLocation, lostDateStr, threshold = 0.02) {
     const [config, heuristicScores] = await Promise.all([
         db.getCampusConfig(),
@@ -90,9 +81,8 @@ export async function runSearch(startLocation, lostDateStr, threshold = 0.02) {
 
     const results = [];
     for (const [building, rawProb] of Object.entries(buildingProbs)) {
-        const pathProb = rawProb / maxProb;
         const scheduleTraffic = trafficMap[building] ?? 0.1;
-        const hScore = computeHeuristic(building, heuristicScores, distanceMatrix, locationNames, start, pathProb, scheduleTraffic);
+        const hScore = 0.5 * (heuristicScores[building] ?? 0.3) + 0.5 * scheduleTraffic;
         const finalScore = hScore * decay;
         if (finalScore >= threshold) {
             results.push({
@@ -113,11 +103,4 @@ export async function runSearch(startLocation, lostDateStr, threshold = 0.02) {
         hoursElapsed: Math.round(hoursElapsed),
         confidence: Math.round(decay * 100),
     };
-}
-
-export async function onItemRecovered(confirmedBuilding, alpha = 0.1) {
-    const hScores = await db.getHeuristicScores();
-    const updated = { ...hScores };
-    updated[confirmedBuilding] = (1 - alpha) * updated[confirmedBuilding] + alpha * 1.0;
-    await db.saveHeuristicScores(updated);
 }

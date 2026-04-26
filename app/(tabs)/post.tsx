@@ -187,7 +187,6 @@ export default function PostScreen() {
             Alert.alert('Missing name', 'Please enter an item name.');
             return;
         }
-        // backend expects items to be posted to /api/items (single collection)
         const headers: any = { 'Content-Type': 'application/json' };
         try {
             if (typeof window !== 'undefined' && window.sessionStorage) {
@@ -196,35 +195,58 @@ export default function PostScreen() {
             }
         } catch (e) { }
 
-        fetch('http://localhost:4000/api/items', {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(newItem)
-        })
-            .then(r => r.json())
-            .then(data => {
-                // show a confirmation and navigate to the main tabs when user acknowledges
-                Alert.alert(
-                    'Success',
-                    `${postType === 'lost' ? 'Lost' : 'Found'} Item submitted!`,
-                    [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
-                );
+        if (isEditMode && originalItem) {
+            const editBody = {
+                name: newItem.name,
+                description: newItem.description,
+                location: newItem.location,
+                dateFound: newItem.dateFound,
+                dropLocation: newItem.dropLocation ?? '',
+                shareContact: newItem.shareContact,
+                contactName: newItem.contactName ?? '',
+                contactPhone: newItem.contactPhone ?? '',
+            };
+            fetch(`http://localhost:4000/api/user/items/${originalItem.id}`, {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify(editBody),
             })
-            .catch(err => {
-                Alert.alert('Error', `Could not submit item: ${String(err).slice(0, 50)}`);
-            });
+                .then(r => r.json())
+                .then(() => {
+                    Alert.alert('Updated', 'Item updated successfully.',
+                        [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
+                    );
+                })
+                .catch(err => {
+                    Alert.alert('Error', `Could not update item: ${String(err).slice(0, 50)}`);
+                });
+        } else {
+            fetch('http://localhost:4000/api/items', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(newItem),
+            })
+                .then(r => r.json())
+                .then(() => {
+                    Alert.alert(
+                        'Success',
+                        `${postType === 'lost' ? 'Lost' : 'Found'} Item submitted!`,
+                        [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
+                    );
+                })
+                .catch(err => {
+                    Alert.alert('Error', `Could not submit item: ${String(err).slice(0, 50)}`);
+                });
+        }
     };
 
     const fetchSimilarItems = async (itemDetails: LostItem): Promise<LostItem[]> => {
-        //implement API call to fetch similar items based on itemDetails
-        //for now we will return dummy data
         return [
             { ...itemDetails, name: "Set of Silver Keys" },
         ];
     };
 
     const handleFoundItemSubmission = async (newItem: LostItem) => {
-        // skip similar-items modal for a simpler flow: submit found posts immediately
         postItemToApi(newItem);
         resetForm();
     };
@@ -434,7 +456,6 @@ export default function PostScreen() {
                 {/* Image */}
                 <View style={styles.section}>
                     <Text style={styles.label}>Photo</Text>
-
                     <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
                         {image
                             ? <Image source={{ uri: image }} style={styles.imagePreview} />

@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
     FlatList,
     Image,
     Linking,
@@ -166,8 +167,8 @@ export default function ClaimsScreen() {
                 <View style={styles.cardContent}>
                     <View style={styles.cardTitleRow}>
                         <Text style={styles.cardTitle} numberOfLines={1}>{item.name}</Text>
-                        <View style={[styles.statusBadge, { backgroundColor: item.status === 'found' ? '#059669' : '#F59E0B' }]}>
-                            <Text style={styles.statusText}>{item.status === 'found' ? 'FOUND' : 'MISSING'}</Text>
+                        <View style={[styles.statusBadge, { backgroundColor: item.status === 'found' ? '#059669' : item.status === 'claimed' ? '#0b0ff5' : '#EF4444' }]}>
+                            <Text style={styles.statusText}>{item.status === 'found' ? 'FOUND' : item.status === 'claimed' ? 'CLAIMED' : 'MISSING'}</Text>
                         </View>
                     </View>
 
@@ -178,12 +179,41 @@ export default function ClaimsScreen() {
                     {item.pendingClaim ? (
                         <View style={styles.claimBanner}>
                             <Text style={styles.claimText}>🔔 Claim by: {item.pendingClaim.byName}</Text>
+                            <TouchableOpacity
+                                style={styles.confirmBtn}
+                                onPress={() => {
+                                    const headers: any = { 'Content-Type': 'application/json' };
+                                    try {
+                                        if (typeof window !== 'undefined' && window.sessionStorage) {
+                                            const t = window.sessionStorage.getItem('aggiefind_token');
+                                            if (t) headers['Authorization'] = `Bearer ${t}`;
+                                        }
+                                    } catch (e) { }
+                                    fetch(`http://localhost:4000/api/user/items/${item.id}`, {
+                                        method: 'PUT',
+                                        headers,
+                                        body: JSON.stringify({ action: 'confirm' }),
+                                    })
+                                        .then(r => r.json())
+                                        .then(data => {
+                                            if (data.resolved) {
+                                                Alert.alert('Confirmed', 'Item marked as resolved.');
+                                            } else {
+                                                Alert.alert('Confirmed', 'Item status updated.');
+                                            }
+                                            loadItemsFromBackend();
+                                        })
+                                        .catch(err => console.log('Error confirming claim:', err));
+                                }}
+                            >
+                                <Text style={styles.confirmBtnText}>Confirm Return</Text>
+                            </TouchableOpacity>
                         </View>
                     ) : null}
 
                     <View style={styles.cardActions}>
                         <View style={styles.cardActionsLeft}>
-                            {item.status !== 'found' && (
+                            {item.status === 'lost' && (
                                 <Button
                                     style={styles.editBtn}
                                     kind="ghost"
@@ -195,7 +225,7 @@ export default function ClaimsScreen() {
                             )}
                         </View>
 
-                        {item.status !== 'found' && (
+                        {item.status === 'lost' && (
                             <TouchableOpacity style={styles.aiBtn} onPress={() => handleAIAssist(item)} activeOpacity={0.8}>
                                 <Octicons name="sparkles-fill" size={16} color="white" />
                                 <Text style={styles.aiBtnText}>Search with AI</Text>
@@ -236,8 +266,8 @@ export default function ClaimsScreen() {
                         />
                         <View style={styles.modalTitleRow}>
                             <Text style={styles.modalTitle}>{selected?.name}</Text>
-                            <View style={[styles.statusBadge, { backgroundColor: selected?.status === 'found' ? '#059669' : '#F59E0B' }]}>
-                                <Text style={styles.statusText}>{selected?.status === 'found' ? 'FOUND' : 'MISSING'}</Text>
+                            <View style={[styles.statusBadge, { backgroundColor: selected?.status === 'found' ? '#059669' : selected?.status === 'claimed' ? '#0b0ff5' : '#EF4444' }]}>
+                                <Text style={styles.statusText}>{selected?.status === 'found' ? 'FOUND' : selected?.status === 'claimed' ? 'CLAIMED' : 'MISSING'}</Text>
                             </View>
                         </View>
                         <Text style={styles.modalMeta}>📍 {selected?.location}</Text>
@@ -325,11 +355,24 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         paddingVertical: 5,
         paddingHorizontal: 8,
+        gap: 6,
     },
     claimText: {
         color: "#92400E",
         fontSize: 12,
         fontWeight: "600",
+    },
+    confirmBtn: {
+        backgroundColor: "#882345",
+        borderRadius: 6,
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        alignSelf: "flex-start",
+    },
+    confirmBtnText: {
+        color: "#fff",
+        fontSize: 12,
+        fontWeight: "700",
     },
     emptyState: {
         flex: 1,
@@ -408,7 +451,7 @@ const styles = StyleSheet.create({
     editBtn: {
         marginTop: 0,
         marginBottom: 0,
-        padding: 2,
+        padding: 1,
         backgroundColor: INV_TEXT,
     },
     aiBtn: {
@@ -416,7 +459,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         backgroundColor: "#882345",
         borderRadius: 8,
-        paddingVertical: 10,
+        paddingVertical: 11,
         paddingHorizontal: 12,
         gap: 10,
     },
