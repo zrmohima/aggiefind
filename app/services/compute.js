@@ -1,5 +1,9 @@
 import { db } from '../../backend/db';
-import { ensureScheduleForRange, getScheduleForWindow } from '../services/scheduler';
+import {
+    buildTrafficFromStudents,
+    ensureStudentSchedules,
+    getStudentsInWindow,
+} from './scheduler';
 
 function distanceWeight(distanceMatrix, locationNames, fromName, toName) {
     const i = locationNames[fromName];
@@ -42,18 +46,6 @@ function dfs(node, prob, depth, maxDepth, buildingProbs, visited, probabilitySco
     }
 }
 
-function buildTrafficMap(scheduleRows) {
-    const raw = {};
-    for (const row of scheduleRows) {
-        const effectiveStudents = Math.round(row.enrollment * (row.attendanceRate ?? 1.0));
-        raw[row.building] = (raw[row.building] ?? 0) + effectiveStudents;
-    }
-    const max = Math.max(...Object.values(raw), 1);
-    const normalized = {};
-    for (const [b, count] of Object.entries(raw)) normalized[b] = count / max;
-    return normalized;
-}
-
 export async function runSearch(startLocation, lostDateStr, threshold = 0.02) {
     const [config, heuristicScores] = await Promise.all([
         db.getCampusConfig(),
@@ -61,16 +53,27 @@ export async function runSearch(startLocation, lostDateStr, threshold = 0.02) {
     ]);
 
     const { graph, distanceMatrix, facilities, facilityLabels, locationIds } = config;
-    const locationNames = Object.fromEntries(Object.entries(locationIds).map(([id, name]) => [name, parseInt(id)]));
+    const locationNames = Object.fromEntries(
+        Object.entries(locationIds).map(([id, name]) => [name, parseInt(id)])
+    );
     const facilitySet = new Set(Object.keys(facilities));
 
-    const schedule = await ensureScheduleForRange(lostDateStr);
+    const { students, attendance } = await ensureStudentSchedules(lostDateStr);
+
+    const presentStudents = getStudentsInWindow(
+        attendance, students, startLocation, lostDateStr
+    );
+
     const now = new Date().toISOString();
-    const relevantRows = getScheduleForWindow(schedule, lostDateStr, now);
-    const trafficMap = buildTrafficMap(relevantRows);
+    const trafficMap = buildTrafficFromStudents(
+        presentStudents, attendance, lostDateStr, now
+    );
+
     const start = graph[startLocation] ? startLocation : Object.keys(graph)[0];
 
-    const probabilityScores = buildProbabilityScores(graph, distanceMatrix, locationNames, trafficMap);
+    const probabilityScores = buildProbabilityScores(
+        graph, distanceMatrix, locationNames, trafficMap
+    );
 
     const buildingProbs = {};
     dfs(start, 1.0, 0, 6, buildingProbs, new Set(), probabilityScores, graph);
@@ -82,8 +85,10 @@ export async function runSearch(startLocation, lostDateStr, threshold = 0.02) {
     const results = [];
     for (const [building, rawProb] of Object.entries(buildingProbs)) {
         const scheduleTraffic = trafficMap[building] ?? 0.1;
-        const hScore = 0.5 * (heuristicScores[building] ?? 0.3) + 0.5 * scheduleTraffic;
+        const learned = heuristicScores[building] ?? 0.3;
+        const hScore = 0.5 * learned + 0.5 * scheduleTraffic;
         const finalScore = hScore * decay;
+
         if (finalScore >= threshold) {
             results.push({
                 building,
@@ -93,6 +98,7 @@ export async function runSearch(startLocation, lostDateStr, threshold = 0.02) {
                 hScore: Math.round(hScore * 10000) / 10000,
                 confidence: Math.round(decay * 100),
                 trafficLoad: Math.round((trafficMap[building] ?? 0) * 100),
+                studentsTracked: presentStudents.length,
             });
         }
     }
@@ -102,5 +108,6 @@ export async function runSearch(startLocation, lostDateStr, threshold = 0.02) {
         results: results.slice(0, 5),
         hoursElapsed: Math.round(hoursElapsed),
         confidence: Math.round(decay * 100),
+        studentsTracked: presentStudents.length,
     };
 }

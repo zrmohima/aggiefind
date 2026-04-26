@@ -7,7 +7,7 @@ const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 
 const DB_PATH = path.join(__dirname, 'db.json');
-const ALLOWED_FIELDS = ['campusConfig', 'heuristicScores', 'schedule'];
+const ALLOWED_FIELDS = ['campusConfig', 'heuristicScores', 'students', 'attendance'];
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret_for_prod';
 const JWT_EXP = '8h';
 
@@ -342,16 +342,16 @@ app.put('/api/ai/:field', (req, res) => {
   res.json({ ok: true });
 });
 
-app.post('/api/ai/schedule/append', (req, res) => {
+app.post('/api/ai/attendance/append', (req, res) => {
   const { rows } = req.body;
   if (!Array.isArray(rows) || rows.length === 0)
     return res.json({ ok: true, added: 0 });
   const db = readDB();
-  const existing = db.schedule ?? [];
-  const existingDates = new Set(existing.map(r => r.date));
-  const newRows = rows.filter(r => !existingDates.has(r.date));
+  const existing = db.attendance ?? [];
+  const existingKeys = new Set(existing.map(r => `${r.studentId}|${r.date}|${r.building}`));
+  const newRows = rows.filter(r => !existingKeys.has(`${r.studentId}|${r.date}|${r.building}`));
   if (newRows.length > 0) {
-    db.schedule = [...existing, ...newRows];
+    db.attendance = [...existing, ...newRows];
     writeDB(db);
   }
   res.json({ ok: true, added: newRows.length, skipped: rows.length - newRows.length });

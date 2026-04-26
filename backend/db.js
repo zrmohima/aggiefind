@@ -1,4 +1,5 @@
-const BASE_URL = `http://localhost:${process.env.PORT || 4000}`;
+const BASE_URL = `http://localhost:${process.env.PORT || 4000}/api`;
+
 
 function authHeader() {
     try {
@@ -11,13 +12,13 @@ function authHeader() {
 }
 
 async function get(field) {
-    const res = await fetch(`${BASE_URL}/api/ai/${field}`, { headers: authHeader() });
+    const res = await fetch(`${BASE_URL}/ai/${field}`, { headers: authHeader() });
     if (!res.ok) throw new Error(`db.get(${field}) failed: ${res.status}`);
     return res.json();
 }
 
 async function put(field, data) {
-    const res = await fetch(`${BASE_URL}/api/ai/${field}`, {
+    const res = await fetch(`${BASE_URL}/ai/${field}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...authHeader() },
         body: JSON.stringify(data),
@@ -29,17 +30,16 @@ export const db = {
     getCampusConfig: () => get('campusConfig'),
     getHeuristicScores: () => get('heuristicScores'),
     saveHeuristicScores: (d) => put('heuristicScores', d),
-    getProbabilityScores: () => get('probabilityScores'),
-    saveProbabilityScores: (d) => put('probabilityScores', d),
-    getSchedule: () => get('schedule'),
-    saveSchedule: (d) => put('schedule', d),
-    appendSchedule: async (newRows) => {
-        if (!newRows.length) return;
-        const res = await fetch(`${BASE_URL}/api/ai/schedule/append`, {
+    getStudents: () => get('students'),
+    saveStudents: (d) => put('students', d),
+    getAttendance: () => get('attendance'),
+    appendAttendance: async (newRows) => {
+        const res = await fetch(`${BASE_URL}/ai/attendance/append`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...authHeader() },
             body: JSON.stringify({ rows: newRows }),
         });
-        if (!res.ok) throw new Error(`appendSchedule failed: ${res.status}`);
+        if (!res.ok) throw new Error(`appendAttendance failed: ${res.status}`);
     },
+    saveAttendance: (d) => put('attendance', d),
 };

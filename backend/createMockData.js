@@ -6,11 +6,21 @@ const DB_PATH = path.join(__dirname, 'db.json');
 function readDb() { return JSON.parse(fs.readFileSync(DB_PATH, 'utf8')); }
 function writeDb(db) { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); }
 
-function randomChoice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randomChoice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function dateKey(d) { return new Date(d).toISOString().split('T')[0]; }
 function toMinutes(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
-function coinToss(probability = 0.7) { return Math.random() < probability; }
+function coinToss(p = 0.7) { return Math.random() < p; }
+
+function seededRandom(seed) {
+    const x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+}
+
+const TEACHING_BUILDINGS = [
+    'ScienceHall', 'WaldenHall', 'BiologyAnnex', 'AstronomyBuilding',
+    'FosterHall', 'YoungHall', 'PeteDomenici', 'HardmanJacobs', 'MiltonHall',
+];
 
 const TIME_SLOTS = [
     { start: '07:30', end: '08:20' }, { start: '08:30', end: '09:20' },
@@ -20,32 +30,68 @@ const TIME_SLOTS = [
     { start: '18:00', end: '18:50' }, { start: '19:00', end: '20:15' },
 ];
 
-const DEPARTMENTS = {
-    ScienceHall: ['CHEM', 'PHYS'], WaldenHall: ['HIST', 'ENGL'],
-    BiologyAnnex: ['BIOL'], AstronomyBuilding: ['ASTR', 'PHYS'],
-    FosterHall: ['ARTS', 'THTR'], YoungHall: ['GOVT', 'SOCI'],
-    PeteDomenici: ['MGMT', 'ECON'], HardmanJacobs: ['CS', 'ECE'],
-    MiltonHall: ['MATH', 'STAT'],
-};
+const DAYS_OF_WEEK = [1, 2, 3, 4, 5];
 
-function generateDaySchedule(dateStr) {
-    const rows = [];
-    for (const [building, depts] of Object.entries(DEPARTMENTS)) {
-        const usedSlots = [];
-        for (const slot of TIME_SLOTS) {
-            const s = toMinutes(slot.start), e = toMinutes(slot.end);
-            if (usedSlots.some(u => s < u.e + 10 && e > u.s - 10) || Math.random() < 0.35) continue;
-            rows.push({
-                date: dateStr,
-                building,
-                course: `${randomChoice(depts)} ${randomInt(100, 599)}`,
-                startTime: slot.start,
-                endTime: slot.end,
-                enrollment: randomInt(15, 50),
-                attendanceRate: Math.round((0.5 + Math.random() * 0.45) * 100) / 100,
-            });
-            usedSlots.push({ s, e });
+function generateStudentWeeklySchedule(studentId) {
+    const seed = parseInt(studentId.replace('s', ''), 10);
+    const count = seededRandom(seed) < 0.5 ? 2 : 3;
+    const slots = [];
+    const usedDays = new Set();
+
+    for (let i = 0; i < count; i++) {
+        const buildingIdx = Math.floor(seededRandom(seed + i * 7) * TEACHING_BUILDINGS.length);
+        const slotIdx = Math.floor(seededRandom(seed + i * 13) * TIME_SLOTS.length);
+        let dayIdx = Math.floor(seededRandom(seed + i * 17) * DAYS_OF_WEEK.length);
+
+        let attempts = 0;
+        while (usedDays.has(DAYS_OF_WEEK[dayIdx]) && attempts < 5) {
+            dayIdx = (dayIdx + 1) % DAYS_OF_WEEK.length;
+            attempts++;
         }
+        usedDays.add(DAYS_OF_WEEK[dayIdx]);
+
+        slots.push({
+            building: TEACHING_BUILDINGS[buildingIdx],
+            dayOfWeek: DAYS_OF_WEEK[dayIdx],
+            startTime: TIME_SLOTS[slotIdx].start,
+            endTime: TIME_SLOTS[slotIdx].end,
+        });
+    }
+    return slots;
+}
+
+// Generate attendance records for a student for a specific date
+const SEMESTER_START = '2026-01-13';
+
+function weeksElapsed(dateStr) {
+    const start = new Date(SEMESTER_START);
+    const date = new Date(dateStr);
+    return Math.max(1, Math.floor((date - start) / (7 * 24 * 60 * 60 * 1000)));
+}
+
+function generateAttendanceForDate(student, dateStr) {
+    const date = new Date(dateStr);
+    const dayOfWeek = date.getDay();
+    const rows = [];
+
+    for (const slot of student.schedule) {
+        if (slot.dayOfWeek !== dayOfWeek) continue;
+        const seed = parseInt(student.id.replace('s', ''), 10);
+        const attendanceRate = Math.round((0.5 + seededRandom(seed + toMinutes(slot.startTime)) * 0.45) * 100) / 100;
+        const totalClassesTillDate = weeksElapsed(dateStr);
+        const classesAttended = Math.round(attendanceRate * totalClassesTillDate);
+
+        rows.push({
+            date: dateStr,
+            studentId: student.id,
+            building: slot.building,
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+            attendanceRate,
+            classesAttended,
+            totalClassesTillDate,
+            likelyPresent: attendanceRate >= 0.70,
+        });
     }
     return rows;
 }
@@ -80,38 +126,79 @@ function simulate() {
     const nonFacilities = allLocations.filter(l => !facilityKeys.includes(l));
 
     let hScores = { ...db.heuristicScores };
-    let schedule = [...db.schedule];
-    const existingDates = new Set(schedule.map(r => r.date));
+
+    // Generate 50 simulated students
+    const students = [];
+    for (let i = 1; i <= 50; i++) {
+        const id = `s${String(i).padStart(3, '0')}`;
+        students.push({
+            id,
+            name: `Student ${i}`,
+            schedule: generateStudentWeeklySchedule(id),
+        });
+    }
+
+    // Generate attendance records for the past 30 days
+    const DAYS_BACK = 30;
+    const now = new Date();
+    const attendance = [];
+    const existingDates = new Set();
+
+    for (let d = 0; d <= DAYS_BACK; d++) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - d);
+        const key = dateKey(date);
+        if (!existingDates.has(key)) {
+            for (const student of students) {
+                attendance.push(...generateAttendanceForDate(student, key));
+            }
+            existingDates.add(key);
+        }
+    }
 
     const NUM_ITEMS = 100;
-    const DAYS_BACK = 10;
     const RECOVERY_PROBABILITY = 0.7;
-    const now = new Date();
 
     let recovered = 0, notRecovered = 0, noPath = 0;
+
     console.log(`\nSimulating ${NUM_ITEMS} lost items over the past ${DAYS_BACK} days...`);
-    console.log(`Recovery probability: ${RECOVERY_PROBABILITY * 100}%\n`);
+    console.log(`Students: 50  |  Recovery probability: ${RECOVERY_PROBABILITY * 100}%\n`);
 
     for (let i = 0; i < NUM_ITEMS; i++) {
         const lostDate = new Date(now);
         lostDate.setDate(lostDate.getDate() - randomInt(0, DAYS_BACK));
         lostDate.setHours(randomInt(8, 18), randomInt(0, 59), 0, 0);
-        const key = dateKey(lostDate);
-        if (!existingDates.has(key)) {
-            schedule.push(...generateDaySchedule(key));
-            existingDates.add(key);
-        }
 
         const startLocation = randomChoice(nonFacilities);
-        const wasRecovered = coinToss(RECOVERY_PROBABILITY);
-        if (!wasRecovered) {
+        const lostDay = dateKey(lostDate);
+        const lostMins = lostDate.getHours() * 60 + lostDate.getMinutes();
+        const winStart = Math.max(0, lostMins - 120);
+
+        // Get students who were present in the lost building during the window
+        const presentIds = new Set(
+            attendance.filter(r =>
+                r.date === lostDay &&
+                r.building === startLocation &&
+                r.likelyPresent &&
+                toMinutes(r.endTime) >= winStart &&
+                toMinutes(r.startTime) <= lostMins
+            ).map(r => r.studentId)
+        );
+
+        if (presentIds.size === 0) {
+            notRecovered++;
+            continue;
+        }
+
+        if (!coinToss(RECOVERY_PROBABILITY)) {
             notRecovered++;
             if ((i + 1) % 10 === 0) {
-                console.log(`  ${i + 1} out of ${NUM_ITEMS} item from ${startLocation} NOT recovered (coin toss)`);
+                console.log(`  ${i + 1} out of ${NUM_ITEMS} from ${startLocation} NOT recovered (coin toss)`);
             }
             continue;
         }
-        const foundLocation = randomChoice(allLocations);
+
+        const foundLocation = randomChoice(facilityKeys);
         const path = findPathBetween(startLocation, foundLocation, graph);
 
         if (!path || path.length < 2) {
@@ -121,27 +208,31 @@ function simulate() {
 
         recovered++;
         hScores = updateHeuristicScores(hScores, foundLocation);
+
         if ((i + 1) % 10 === 0) {
-            console.log(`  ${i + 1} out of ${NUM_ITEMS} item from ${startLocation} found at ${foundLocation} (path is ${path.join(' -> ')})`);
+            console.log(`  ${i + 1} out of ${NUM_ITEMS} from ${startLocation.padEnd(20)} found at ${foundLocation.padEnd(15)} | students in window: ${presentIds.size} | path: ${path.join(' -> ')}`);
         }
     }
 
     db.heuristicScores = hScores;
-    db.schedule = schedule;
+    db.students = students;
+    db.attendance = attendance;
     writeDb(db);
 
     console.log(`\nSimulation complete`);
-    console.log(`   Items simulated : ${NUM_ITEMS}`);
-    console.log(`   Recovered       : ${recovered}`);
-    console.log(`   Not recovered   : ${notRecovered}`);
-    console.log(`   No path found   : ${noPath}`);
-    console.log(`   Schedule rows   : ${schedule.length}`);
-    console.log(`\nFinal heuristic scores (after ${recovered} recoveries):`);
+    console.log(`   Items simulated   : ${NUM_ITEMS}`);
+    console.log(`   Recovered         : ${recovered}`);
+    console.log(`   Not recovered     : ${notRecovered}`);
+    console.log(`   No path found     : ${noPath}`);
+    console.log(`   Students generated: ${students.length}`);
+    console.log(`   Attendance rows   : ${attendance.length}`);
+    console.log(`\nFinal heuristic scores after ${recovered} recoveries:`);
 
-    const sorted = Object.entries(hScores).sort((a, b) => b[1] - a[1]);
-    for (const [b, s] of sorted) {
-        console.log(`  ${b} ${s.toFixed(4)}`);
-    }
+    Object.entries(hScores)
+        .sort((a, b) => b[1] - a[1])
+        .forEach(([b, s]) => {
+            console.log(`  ${b} ${s.toFixed(4)}`);
+        });
     console.log('\ndb.json updated.');
 }
 
