@@ -108,7 +108,7 @@ function simulate() {
         if (!wasRecovered) {
             notRecovered++;
             if ((i + 1) % 10 === 0) {
-                console.log(`  [${i + 1}/${NUM_ITEMS}] item from ${startLocation} → NOT recovered (coin toss)`);
+                console.log(`  ${i + 1} out of ${NUM_ITEMS} item from ${startLocation} NOT recovered (coin toss)`);
             }
             continue;
         }
@@ -123,7 +123,7 @@ function simulate() {
         recovered++;
         hScores = updateHeuristicScores(hScores, foundLocation);
         if ((i + 1) % 10 === 0) {
-            console.log(`  [${i + 1}/${NUM_ITEMS}] item from ${startLocation.padEnd(20)} → found at ${foundLocation.padEnd(15)} (path: ${path.join(' → ')})`);
+            console.log(`  ${i + 1} out of ${NUM_ITEMS} item from ${startLocation} found at ${foundLocation} (path is ${path.join(' -> ')})`);
         }
     }
 
@@ -141,8 +141,7 @@ function simulate() {
 
     const sorted = Object.entries(hScores).sort((a, b) => b[1] - a[1]);
     for (const [b, s] of sorted) {
-        const bar = '█'.repeat(Math.round(s * 20));
-        console.log(`  ${b.padEnd(22)} ${bar.padEnd(22)} ${s.toFixed(4)}`);
+        console.log(`  ${b} ${s.toFixed(4)}`);
     }
     console.log('\ndb.json updated.');
 }
