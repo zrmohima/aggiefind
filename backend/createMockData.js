@@ -52,19 +52,18 @@ function generateDaySchedule(dateStr) {
 
 function findPathBetween(start, end, graph) {
     if (start === end) return [start];
-    const queue = [[start, [start]]];
-    const visited = new Set([start]);
-    while (queue.length) {
-        const [node, path] = queue.shift();
+    function dfs(node, path, visited) {
+        if (node === end) return path;
         for (const neighbor of Object.keys(graph[node] ?? {})) {
-            if (neighbor === end) return [...path, neighbor];
             if (!visited.has(neighbor)) {
                 visited.add(neighbor);
-                queue.push([neighbor, [...path, neighbor]]);
+                const result = dfs(neighbor, [...path, neighbor], visited);
+                if (result) return result;
             }
         }
+        return null;
     }
-    return null;
+    return dfs(start, [start], new Set([start]));
 }
 
 function updateHeuristicScores(scores, confirmedBuilding, alpha = 0.1) {
