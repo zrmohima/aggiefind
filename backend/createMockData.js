@@ -10,7 +10,7 @@ function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)
 function randomChoice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function dateKey(d) { return new Date(d).toISOString().split('T')[0]; }
 function toMinutes(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
-function coinToss(p = 0.7) { return Math.random() < p; }
+function coinToss(p) { return Math.random().toFixed(1) < p; }
 
 function seededRandom(seed) {
     const x = Math.sin(seed) * 10000;
@@ -122,8 +122,7 @@ function simulate() {
     const db = readDb();
     const { graph, facilities, locationIds } = db.campusConfig;
     const allLocations = Object.values(locationIds);
-    const facilityKeys = Object.keys(facilities);
-    const nonFacilities = allLocations.filter(l => !facilityKeys.includes(l));
+    const facilityKeys = Object.values(locationIds);
 
     let hScores = { ...db.heuristicScores };
 
@@ -156,8 +155,8 @@ function simulate() {
         }
     }
 
-    const NUM_ITEMS = 100;
-    const RECOVERY_PROBABILITY = 0.7;
+    const NUM_ITEMS = 1000;
+    const RECOVERY_PROBABILITY = 1;
 
     let recovered = 0, notRecovered = 0, noPath = 0;
 
@@ -169,7 +168,7 @@ function simulate() {
         lostDate.setDate(lostDate.getDate() - randomInt(0, DAYS_BACK));
         lostDate.setHours(randomInt(8, 18), randomInt(0, 59), 0, 0);
 
-        const startLocation = randomChoice(nonFacilities);
+        const startLocation = randomChoice(allLocations);
         const lostDay = dateKey(lostDate);
         const lostMins = lostDate.getHours() * 60 + lostDate.getMinutes();
         const winStart = Math.max(0, lostMins - 120);
